@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using QlikView.Qvx.QvxLibrary;
 
-namespace introConnector.QV
+namespace SalesforceReportsConnector.QV
 {
 	internal class QvEventLogConnection : QvxConnection
 	{
@@ -14,20 +13,20 @@ namespace introConnector.QV
 			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "Init()");
 
 			var eventLogFields = new QvxField[]
-				{
-					new QvxField("Title", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-					new QvxField("Message", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
-				};
+			{
+				new QvxField("Title", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
+				new QvxField("Message", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
+			};
 
 			MTables = new List<QvxTable>
+			{
+				new QvxTable
 				{
-					new QvxTable
-						{
-							TableName = "DummyData",
-							GetRows = GetApplicationEvents,
-							Fields = eventLogFields
-						}
-				};
+					TableName = "DummyData",
+					GetRows = GetApplicationEvents,
+					Fields = eventLogFields
+				}
+			};
 		}
 
 		private IEnumerable<QvxDataRow> GetApplicationEvents()

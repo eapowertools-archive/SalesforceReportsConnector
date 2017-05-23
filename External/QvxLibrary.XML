@@ -1,0 +1,1326 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>QvxLibrary</name>
+    </assembly>
+    <members>
+        <member name="T:QlikView.Qvx.QvxLibrary.IQvxServer">
+            <summary>
+            The QvxServer is the core of the QVX SDK. All communication with QlikView   
+            as well as all communication with the custom data source is handled by an  
+            instance of the QvxServer. Each custom connector must have
+            a class extending the QvxServer class. The QvxServer class in its turn 
+            implements the IQvxServer interface.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.IQvxServer.Run(System.String,System.String)">
+            <summary>
+            Run QvxServer from within QlikView. It utilizes a command pipe 
+            to communicate with QlikView and a data pipe to send information to
+            it.
+            </summary>
+            <param name="parentString">Reference to parent window handle</param>
+            <param name="pipeName">Command pipe name</param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.IQvxServer.RunStandalone(System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Run QvxServer as a standalone application. With a standalone 
+            connector you create a .QVX file which can be read by QlikView. A
+            standalone connector utilizes functionality similar to a command 
+            pipe to get the information it needs to create the .QVX file.
+            </summary>
+            <param name="parentString">Reference to parent window handle</param>
+            <param name="pipeName">Command pipe name</param>
+            <param name="connectString">A custom connect string</param>
+            <param name="targetPath">Target path for the .QVX file to be created</param>
+            <param name="standaloneQuery">A SQL-like query, identical to the
+            query used within the script editor of QlikView. The script defines
+            which fields to retrieve from a data source.</param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.IQvxServer.CreateConnectionString">
+            <summary>
+            This method is called when QlikView sends a QVX_EDIT_CONNECT
+            command. The method must be implemented by the user and returns 
+            connect string parameters.
+            </summary>
+            <returns>
+            <code>string</code> with parameters e.g. "Server=localhost;UserId=SomeUserName".
+            </returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.IQvxServer.CreateSelectStatement">
+            <summary>
+            This method should be overridden by a custom connector which has a
+            custom select dialog and thereby supports QVX_EDIT_SELECT. It 
+            should return a select statement.
+            </summary>
+            <returns>A string containing the custom select statement</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.IQvxServer.HandleJsonRequest(System.String,System.String[],QlikView.Qvx.QvxLibrary.QvxConnection)">
+            <summary>
+            This method should be overridden by a custom connector. It
+            should return a QvxReply.
+            </summary>
+            <param name="method">Method called</param>
+            <param name="userParameters">User defined parameters</param>
+            <param name="connection">Reference to the current connection</param>
+            <returns>A QvxReply</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.IQvxServer.CreateConnection">
+            <summary>
+            This method should be overridden by a custom connector and return a
+            new instance of a class implementing QvxConnection. The class 
+            implementing QvxConnection is typically created by a developer as 
+            part of a connector.
+            </summary>
+            <returns>A new instance of a class implementing QvxConnection</returns>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.IQvxServer.WildcardSelectionAllowed">
+            <summary>
+            Ask the QvxServer if it allows wildcard selection of fields.
+            </summary>
+            <returns>True or false depending on whether the connector allows wildcard
+            selection of fields or not.</returns>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.IQvxServer.CustomCaption">
+            <summary>
+            Ask the QvxServer for the current caption
+            </summary>
+            <returns>A caption if available. Otherwise null.</returns>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvDataContractResponse">
+            <summary>
+            Baseclass for DataContract definitions
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.Info">
+            <summary>
+            DataContract for Info response
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.Info.qMessage">
+            <summary>
+            Info response member
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvDataContractDatabaseListResponse">
+            <summary>
+            DataContract for DatabaseList response
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvDataContractDatabaseListResponse.qDatabases">
+            <summary>
+            DatabaseList response member
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.Database">
+            <summary>
+            DataContract for Database response
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.Database.qName">
+            <summary>
+            Database response member
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvDataContractTableListResponse">
+            <summary>
+            DataContract for TableList response
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvDataContractTableListResponse.qTables">
+            <summary>
+            TableList response member
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvDataContractFieldListResponse">
+            <summary>
+            DataContract for FieldList response
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvDataContractFieldListResponse.qFields">
+            <summary>
+            FieldList response member
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxDataValue">
+            <summary>
+            Generic data type for the value of a field in a QvxDataRow.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxDataValue.op_Implicit(System.String)~QlikView.Qvx.QvxLibrary.QvxDataValue">
+            <summary>
+            Create new generic QvxDataValue object from string value.
+            </summary>
+            <param name="value">string to be stored as QvxDataValue.</param>
+            <returns>QvxDataValue object.</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxDataValue.op_Implicit(System.Int32)~QlikView.Qvx.QvxLibrary.QvxDataValue">
+            <summary>
+            Create new generic QvxDataValue object from integer value.
+            </summary>
+            <param name="value">int to be stored as QvxDataValue.</param>
+            <returns>QvxDataValue object.</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxDataValue.op_Implicit(System.Double)~QlikView.Qvx.QvxLibrary.QvxDataValue">
+            <summary>
+            Create new generic QvxDataValue object from double value.
+            </summary>
+            <param name="value">double to be stored as QvxDataValue.</param>
+            <returns>QvxDataValue object.</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxDataValue.op_Implicit(System.Boolean)~QlikView.Qvx.QvxLibrary.QvxDataValue">
+            <summary>
+            Create new generic QvxDataValue object from boolean value.
+            </summary>
+            <param name="value">bool to be stored as QvxDataValue.</param>
+            <returns>QvxDataValue object.</returns>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxConnection">
+            <summary>
+            Class keeping track of command pipe and data pipe connections. This
+            class is also responsible for holding all QvxTable definitions.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxConnection.MTables">
+            <summary>
+            Array containing all table definitions made for a custom connector.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxConnection.MParameters">
+            <summary>
+            Below connect statement syntax for Connectors is stated:
+            <para>CUSTOM CONNECT TO "Provider=custom_connect_app_name;[UserId
+            | XUserId=userid;] [Password | XPassword=password;]
+            [custom_connect_app_specific_param]" ;</para>
+            
+            <para>Connect Parameters - Description</para>
+            <list type="bullet">
+            <item>custom_connect_app_name - Connector file name</item>
+            <item>userid - Unscrambled or scrambled user id</item>
+            <item>password - Unscrambled or scrambled password</item>
+            <item>custom_connect_app_specific_param - Connector specific parameters</item>
+            </list>
+            <para>As an example a custom connect string could look like this:</para>
+            <para>CUSTOM CONNECT TO "Provider=MyCustomConnect.exe;ASHOST=XX.XX.X.XX;SYSNR=X;CLIENT=X;UserId=X;Password=X ";</para>
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxConnection.#ctor">
+            <summary>
+            Instantiates a new QvxConnection.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxConnection.Init">
+            <summary>
+            Method used to initialize a new connection. Should be overridden by
+            a custom connector and contain definitions for all QvxTables in the
+            custom data source.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxConnection.Dispose">
+            <summary>
+            Dispose of connection.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxConnection.ParseConnectionString(System.String)">
+            <summary>
+            This method parses a string on the form "var1=value1;var2=value2;..."
+            and returns the stuff in a dictionary.
+            </summary>
+            <param name="connectionString">The string to parse.</param>
+            <returns>A dictionary containing all the variables.</returns>
+            <exception cref="T:System.ApplicationException">Thrown when the string is malformed,
+            e.g. duplicate values or missing equals-signs. Contains a human-readable
+            message that can be sent upstream.</exception>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxConnection.ExtractQuery(System.String,System.Collections.Generic.List{QlikView.Qvx.QvxLibrary.QvxTable})">
+            <summary>
+            Override this method if you want to implement custom parsing of 
+            your query. If your query is not an SQL query you need to
+            parse it yourself.
+            </summary>
+            <param name="query">Contains the query/statement to be parsed.</param>
+            <param name="tables">Contains all table definitions defined as MTables in the Init() method.</param>
+            <returns>A QvxDataTable containing a table and its selected fields.</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxConnection.FindTable(System.String,System.Collections.Generic.IEnumerable{QlikView.Qvx.QvxLibrary.QvxTable})">
+            <summary>
+            Find QvxTable based on name.
+            </summary>
+            <param name="name">Table name to search for</param>
+            <param name="tables">QvxTable array to search in</param>
+            <returns>The QvxTable with said name if it exists, otherwise null</returns>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxDataRow">
+            <summary>
+            Generic data type for a data row in a QvxTable.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxDataRow.#ctor">
+            <summary>
+            Instantiates a new QvxDataRow.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxDataRow.Item(QlikView.Qvx.QvxLibrary.QvxField)">
+            <summary>
+            Set/Get the value of a specific field in a QvxDataRow.
+            </summary>
+            <param name="field">The field in the row for which you would like to set or get the value.</param>
+            <returns>The field value formatted as a generic QvxDataValue.</returns>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxDataTable">
+            <summary>
+            Helper class which keeps track of a QvxTable and its associated QvxField[] array
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxDataTable.#ctor(QlikView.Qvx.QvxLibrary.QvxTable)">
+            <summary>
+            Instantiates a new QvxDataTable from a QvxTable
+            </summary>
+            <param name="table">The QvxTable used to instantiate the QvxDataTable</param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxDataTable.Select(QlikView.Qvx.QvxLibrary.QvxField[])">
+            <summary>
+            Associate the QvxField[] array sent in as parameter 
+            <paramref name="fields"/> with the QvxDataTables corresponding 
+            member.
+            </summary>
+            <param name="fields">QvxField[] array to associate with the 
+            QvxDataTables corresponding member</param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxDataTable.GetRows">
+            <summary>
+            Return all the rows in the QvxTable member.
+            </summary>
+            <returns>IEnumerable with all QvxDataRow elements of the QvxTable member
+            .</returns>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxDataTable.Fields">
+            <summary>
+            Get QvxField[] array.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxDataTable.TableName">
+            <summary>
+            Get name of QvxTable member.
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxMalformedPacketException">
+            <summary>
+            A expection that is thrown when a malformed packet is encountered in the
+            command pipe.
+            </summary>
+            <remarks>
+            <para>If this exception is encountered, the other end (probably) does not
+            speak QVX. In any case, since the QVX packtising format does not contain
+            synchronisation sequences, the pipe is not guaranteed to be in a state where
+            more packets can be read, and subsequent reads may throw this exception
+            again, even if the pipe in fact contains more proper packets.</para>
+            <para>If the packet header and footer were invalid, the pipe is almost
+            surely not further readable.</para>
+            <para>If the packet could be read from pipe, but the payload failed to
+            parse as XML, it might be possible to read further packets. The resulting
+            XmlException is stored in InnerException, and can be analysed. If it
+            appears that the received data is gibberish, it was probably just luck
+            that the packet footer was of the correct format, and the pipe will not
+            be further readable. However, if it appears the other end is talking XML,
+            only with syntax errors, it could be the result of a transfer error or bug
+            in the transmitting software. In this case it could be a good idea to reply
+            with an error message, e.g. QVX_SYNTAX_ERROR, and see if the next packet
+            is OK.</para>
+            </remarks>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxMalformedPacketException.#ctor(System.String)">
+            <summary>
+            Initialises a new instance of the MalformedPacketException class with
+            a specified error message.
+            </summary>
+            <param name="message">The error message that explains the reason for
+            the exception.</param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxMalformedPacketException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initialises a new instance of the MalformedPacketException class with
+            a specified error message and a reference to the inner exception that
+            is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for
+            the exception.</param>
+            <param name="innerException">The exception that is the cause of the
+            current exception. If the innerException parameter is not a null reference,
+            the current exception is raised in a catch block that handles the inner
+            exception.</param>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxPleaseSendReplyException">
+            <summary>
+            An exception that is thrown to signify that an error message, in the form
+            of a QvxReply, should be sent back across the command pipe.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxPleaseSendReplyException.#ctor(QlikView.Qvx.QvxLibrary.QvxResult,System.String)">
+            <summary>
+            Throw new QvxPleaseSendReplyException when you want QvxLibrary.dll 
+            to send an error message to QlikView.
+            </summary>
+            <param name="result">QvxResult you would like to send, e.g. QvxResult.QVX_TABLE_NOT_FOUND</param>
+            <param name="message">Error message.</param>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxLog">
+            <summary>
+            Class taking care of logging in the custom connector.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxLog.#cctor">
+            <summary>
+            Initialises Log directory.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxLog.SetLogLevels(System.Boolean,System.Boolean)">
+            <summary>
+            Set the log levels for the log. Activate/deactivate logging of 
+            messages with QvxLogSeverity Debug or Warning respectively.
+            </summary>
+            <remarks>If the method is not overridden, messages with both
+            QvxLogSeverity 'Debug' and 'Warning' will be inactivated.</remarks>
+            <param name="logDebug">Set true if you want to activate log
+            messages with QvxLogSeverity 'Debug'.</param>
+            <param name="logWarnings">Set true if you want to activate log
+            messages with QvxLogSeverity 'Warning'.</param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxLog.Log(QlikView.Qvx.QvxLibrary.QvxLogFacility,QlikView.Qvx.QvxLibrary.QvxLogSeverity,System.String)">
+            <summary>
+            Log a message with specified QvxLogFacility and QvxLogSeverity.
+            </summary>
+            <param name="facility">Describes what the log post is related to.
+            </param>
+            <param name="severity">Describes the severity of the event that
+            triggered the log to be posted.</param>
+            <param name="message">string containing message to be logged.
+            </param>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxLogFacility">
+            <summary>
+            There are two different types of logs, or log facilities. The types are
+            Application and Audit.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxLogFacility.Application">
+            <remarks>
+            Events logged that are related to the custom QVX connector.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxLogFacility.Audit">
+            <remarks>
+            Logs to create an audit trail of users activities and 
+            administration of the system.
+            </remarks>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxLogSeverity">
+            <summary>
+            There are four different types of log messages, or log severities. The types are
+            Debug, Notice, Warning and Error.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxLogSeverity.Debug">
+            <remarks>
+            Info useful to developers for debugging the application, not 
+            useful during operations.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxLogSeverity.Notice">
+            <remarks>
+            Events that are unusual but not error conditions - might be 
+            summarized in an email to developers or admins to spot 
+            potential problems - no immediate action required.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxLogSeverity.Warning">
+            <remarks>
+            Warning messages - not an error, but indication that an error 
+            will occur if action is not taken, e.g. file system 85% full 
+            - each item must be resolved within a given time.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxLogSeverity.Error">
+            <remarks>
+            Non-urgent failures - these should be relayed to developers 
+            or administrators; each item must be resolved within a given 
+            time.
+            </remarks>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxServer">
+            <summary>
+            The QvxServer is the core of the QVX SDK. All communication with QlikView   
+            as well as all communication with the custom data source is handled by an  
+            instance of the QvxServer. Each custom connector must have
+            a class extending the QvxServer class. The QvxServer class in its turn 
+            implements the IQvxServer interface.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxServer.MParentWindow">
+            <summary>
+            Handle to a connector's parent window (QlikView's Edit Script
+            dialog).
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxServer.Run(System.String,System.String)">
+            <summary>
+            Run QvxServer from within QlikView. It utilizes a command pipe 
+            to communicate with QlikView and a data pipe to send information to
+            it.
+            </summary>
+            <param name="parentString">Reference to parent window handle</param>
+            <param name="pipeName">Command pipe name</param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxServer.RunStandalone(System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Run  QvxServer as a standalone application. With a standalone 
+            connector you create a .QVX file which can be read by QlikView. A
+            standalone connector utilizes functionality similar to a command 
+            pipe to get the information it needs to create the .QVX file.
+            </summary>
+            <param name="parentString">Reference to parent window handle</param>
+            <param name="pipeName">Command pipe name</param>
+            <param name="connectString">A custom connect string</param>
+            <param name="targetPath">Target path for the .QVX file to be created</param>
+            <param name="standaloneQuery">A SQL-like query, identical to the
+            query used within the script editor of QlikView. The script defines
+            which fields to retrieve from a data source.</param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxServer.ParseJson``1(System.String)">
+            <summary>
+            Deserialize JSON string to object. Requires 
+            DataContract for the class being parsed.
+            </summary>
+            <typeparam name="T">Output class</typeparam>
+            <param name="json">JSON string to be deserialized</param>
+            <returns>Object of Output class containing data
+            from JSON</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxServer.ToJson(System.Object)">
+            <summary>
+            Serialize object into JSON string. Requires 
+            DataContract for the class being parsed.
+            </summary>
+            <param name="data">Object to be serialized</param>
+            <returns>JSON string with data from Object</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxServer.CreateConnectionString">
+            <summary>
+            This method is called when QlikView sends a QVX_EDIT_CONNECT
+            command. The method must be implemented by the user and may return 
+            connect string parameters.
+            </summary>
+            <returns>
+            <code>string</code> with parameters e.g. "Server=localhost;UserId=SomeUserName".
+            </returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxServer.CreateSelectStatement">
+            <summary>
+            This method should be overridden by a custom connector which has a
+            custom select dialog and thereby supports QVX_EDIT_SELECT. It 
+            should return a select statement.
+            </summary>
+            <returns>A string containing the custom select statement</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxServer.HandleJsonRequest(System.String,System.String[],QlikView.Qvx.QvxLibrary.QvxConnection)">
+            <summary>
+            [QlikView 12 ONLY!]
+            This method should be overridden by a custom connector. It
+            should return a QvxReply.
+            </summary>
+            <param name="method">Method called</param>
+            <param name="userParameters">User defined parameters</param>
+            <param name="connection">Reference to the current connection</param>
+            <returns>A QvxReply</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxServer.CreateConnection">
+            <summary>
+            This method should be overridden by a custom connector and return a
+            new instance of a class implementing QvxConnection. The class 
+            implementing QvxConnection is typically created by a developer as 
+            part of a connector.
+            </summary>
+            <returns>A new instance of a class implementing QvxConnection</returns>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxServer.WildcardSelectionAllowed">
+            <summary>
+            Ask the QvxServer if it allows wildcard selection of fields.
+            </summary>
+            <returns>True or false depending on whether the connector allows a wildcard
+            selection of fields or not.</returns>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxServer.CustomCaption">
+            <summary>
+            Ask the QvxServer for the current caption
+            </summary>
+            <returns>A caption if available. Otherwise null.</returns>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxCommandPipe">
+            <summary>
+            The QvxCommandPipe class provides a simple interface for interacting with
+            the QVX command pipe.
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxPipe">
+            <summary>
+            The CommunicationsPipe class contains all the common logic of the command
+            pipe and the data pipe.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxPipe.isServer">
+            <summary>
+            The isServer field keeps track of whether this object is operating as
+            the server end of client end.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxPipe.isConnected">
+            <summary>
+            The isConnected field keeps track of whether the pipe has been connected.
+            This propery does not change to false when the pipe closes. Use the
+            disposed field for that.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxPipe.pipeStream">
+            <summary>
+            The pipeStream field contains the pipe object which encapsulates the
+            system pipe.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxPipe.ConnectPipe">
+            <summary>
+            Causes the pipe to connect. Callers beware, method assumes pipe is unconnected.
+            Calling it again after connection will throw an exception at you.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxPipe.WaitForConnection">
+            <summary>
+            Connects the pipe. This happens automatically when the first operation
+            is performed, so calling it is not imperative.
+            </summary>
+            <remarks>
+            If the pipe is a server, the method will block until a client establishes
+            a connection. If no one is trying to access the pipe the thread will
+            therefore hang indefinitely. If you are the client, the method will block
+            if there is no pipe with the specified name.
+            </remarks>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxCommandPipe.#ctor(QlikView.Qvx.QvxLibrary.QvxServer,System.String)">
+            <summary>
+            Creates a new command pipe that others can connect to.
+            </summary>
+            <param name="pipeName">The name of the pipe.</param>
+            <param name="server">Reference to the current server.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="pipeName"/>
+            is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="pipeName"/>
+            is a zero-length string.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="pipeName"/>
+            is set to "anonymous", which is a reserved name.</exception>
+            <exception cref="T:System.PlatformNotSupportedException">The program is running
+            on a platform which does not support named pipes.</exception>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxCommandPipe.Connect(QlikView.Qvx.QvxLibrary.QvxServer,System.String)">
+            <summary>
+            Connects to a pipe that another process has created.
+            </summary>
+            <param name="pipeName">The name of the pipe. This should be of the
+            form "\\(server)\pipe\(pipename)", or "(pipename)" in which case
+            the server is assumed to be the current computer.</param>
+            <param name="server">Reference to the current server.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="pipeName"/>
+            is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="pipeName"/>
+            is a zero-length string.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="pipeName"/>
+            is set to "anonymous" which is a reserved name.</exception>
+            <returns>A QvxCommandPipe object which can be used to send and receive
+            packets.</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxCommandPipe.Connect(QlikView.Qvx.QvxLibrary.QvxServer,System.String,System.String)">
+            <summary>
+            Connects to a pipe that another process has created on the network.
+            </summary>
+            <param name="server">Reference to the current server.</param>
+            <param name="pipeName">The name of the pipe.</param>
+            <param name="serverName">The name of the computer on which the pipe
+            was created. Can be null, empty, "." (full stop) or "localhost" to
+            indicate that the pipe is on this computer.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="pipeName"/>
+            is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="pipeName"/>
+            is a zero-length string.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="pipeName"/>
+            is set to "anonymous", which is a reserved name.</exception>
+            <returns>A QvxCommandPipe object which can be used to send and receive
+            packets.</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxCommandPipe.ReadPacket">
+            <summary>
+            Reads a packet from the pipe.
+            </summary>
+            <returns>The XML-data payload contained within the packet.</returns>
+            <exception cref="T:System.IO.IOException">An I/O error occurred, e.g. pipe is broken.
+            </exception>
+            <exception cref="T:QlikView.Qvx.QvxLibrary.QvxMalformedPacketException">Thrown if the received data
+            was not a well-formed packet, or if the packet did not contain well-formed
+            XML. This may leave the pipe in an undefined state.</exception>
+            <exception cref="T:System.ObjectDisposedException">Thrown if the pipe is closed.
+            </exception>
+            <remarks>
+            <para>If this is the server end of the pipe and this is the first packet
+            transmitted, the method will block until a client establishes a
+            connection. The method will block until a complete packet is received.
+            If no one is trying to connect to the pipe, or the other end is also
+            listening, the thread will hang indefinitely.</para>
+            <para>This method will interpret the contents as XML, but will not
+            validate it to a schema.</para>
+            </remarks>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxCommandPipe.SendPacket(QlikView.Qvx.QvxLibrary.QvxMessage)">
+            <summary>
+            Sends a packet across the pipe.
+            </summary>
+            <param name="payload">The QvxMessage payload to transmit.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="payload"/>
+            is null.</exception>
+            <exception cref="T:System.IO.IOException">An I/O error occurred, e.g. pipe is broken.</exception>
+            <exception cref="T:System.ObjectDisposedException">Thrown if the pipe is closed.
+            </exception>
+            <remarks>
+            <para>If this is the server end of the pipe and this is the first packet
+            transmitted, the method will block until a client establishes a
+            connection. If no one is trying to access the pipe the thread will
+            therefore hang indefinitely.</para>
+            </remarks>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxMessage">
+            <summary>
+            <c>QvxMessage</c> is the base class of all messages that can be transmitted
+            over a QVX-pipe.
+            </summary>
+            <remarks>
+            Any nonstatic fields that are added to the QvxMessage subclasses must be
+            marked with [NonSerialized]. All fields that are to be serialized to XML
+            will be automatically generated from the schemata.
+            </remarks>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxMessage.GenerateXML(System.Xml.XmlWriter)">
+            <summary>
+            QvxMessage helper method
+            </summary>
+            <param name="target"></param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxMessage.ReadEnum``1(System.Xml.XmlDocument,System.String)">
+            <summary>
+            QvxMessage helper method
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="document"></param>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxMessage.ReadStringArray(System.Xml.XmlDocument,System.String)">
+            <summary>
+            QvxMessage helper method
+            </summary>
+            <param name="document"></param>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxResult">
+            <summary>
+            Possible results from QVX command pipe.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_OK">
+            <remarks>
+            Command executed successfuly.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_UNKNOWN_COMMAND">
+            <remarks>
+            Command is not recognized.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_UNSUPPORTED_COMMAND">
+            <remarks>
+            Command is recognized but not implemented.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_UNEXPECTED_COMMAND">
+            <remarks>
+            Execution of the command requested not in the right circumstances.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_SYNTAX_ERROR">
+            <remarks>
+            SQL statement contains a syntax error.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_CONNECT_ERROR">
+            <remarks>
+            Data source connection is not established or is lost.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_TABLE_NOT_FOUND">
+            <remarks>
+            Table specified in SQL statement is not found.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_FIELD_NOT_FOUND">
+            <remarks>
+            Field specified in SQL statement is not found.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_PIPE_ERROR">
+            <remarks>
+            Failed to write data to data pipe.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_UNEXPECTED_END_OF_DATA">
+            <remarks>
+            Failed to fetch data from data source.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_CANCEL">
+            <remarks>
+            Command execution cancelled by the user.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxResult.QVX_UNKNOWN_ERROR">
+            <remarks>
+            Other error occured.
+            </remarks>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxReply">
+            <summary>
+            QvxReply is a QvxMessage sent back from the connector
+            to QlikView as the response to a QvxRequest. As a response 
+            to QlikView's request the Connector sends a message 
+            formatted according to QvxReply XML schema. The data 
+            stream if formatted as follow:
+            * 4-byte that specify the length of the following string.
+            * Zero terminated string that is formatted according to QvxReply XML schema.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxReply.#ctor(QlikView.Qvx.QvxLibrary.QvxResult,System.String,System.String)">
+            <summary>
+            Constructor to create a new QvxReply. See QlikView 
+            QVX File Format for details.
+            </summary>
+            <param name="result"></param>
+            <param name="outputString"></param>
+            <param name="errorMessage"></param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxReply.#ctor">
+            <summary>
+            Constructor to create a new empty QvxReply. See 
+            QlikView QVX File Format for details.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxReply.GenerateXML(System.Xml.XmlWriter)">
+            <summary>
+            Generates XML from QvxReply.
+            </summary>
+            <param name="writer"></param>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxReply.Result">
+            <summary>
+            Error message type. See QvxResult.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxReply.OutputValues">
+            <summary>
+            String array of result values. See QVXCommandType table for how it 
+            is used.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxReply.ErrorMessage">
+            <summary>
+            Error explanation when Result is not QVX_OK.
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxCommand">
+            <summary>
+            Enumerator of all commands possible to send
+            to the connector.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_CONNECT">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_DISCONNECT">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_TERMINATE">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_EDIT_CONNECT">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_EDIT_SELECT">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_EXECUTE">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_PROGRESS">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_ABORT">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_GENERIC_COMMAND">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_GET_EXECUTE_ERROR">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxCommand.QVX_EXECUTE_STANDALONE">
+            <remarks>
+            
+            </remarks>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxConnectOptions">
+            <summary>
+            Connection options
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxConnectOptions.#ctor(System.Xml.XmlElement)">
+            <summary>
+            Constructor for setting connection options.
+            </summary>
+            <param name="elem"></param>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxConnectOptions.Provider">
+            <summary>
+            Connector namet hat is equivalent to the 
+            Connector file name.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxConnectOptions.LoginTimeoutSec">
+            <summary>
+            The number of seconds to wait for a login 
+            request to complete before returning to the 
+            application.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxConnectOptions.ConnectTimeoutSec">
+            <summary>
+            The number of seconds to wait for any request 
+            on the connection to complete before returning 
+            to the application.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxConnectOptions.AutoCommit">
+            <summary>
+            If true, automatically commit SQL statement 
+            immediately after it is executed.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxConnectOptions.ReadOnly">
+            <summary>
+            If true, open data source as read-only.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxConnectOptions.AllowPrompt">
+            <summary>
+            If true, then user prompts are allowed.
+            ATTENTION! This option is always set to
+            false for QlikView 12 and above.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxConnectOptions.IsEmpty">
+            <summary>
+            Static option set to true
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxRequest">
+            <summary>
+            Data stream of QlikView request if formatted as follow:
+            * 4-byte that specify the length of the following string.
+            * Zero terminated string that is formatted according to QvxRequest XML schema.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxRequest.GenerateXML(System.Xml.XmlWriter)">
+            <summary>
+            Generate XML from QvxRequest
+            </summary>
+            <param name="writer"></param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxRequest.#ctor">
+            <summary>
+            Constructor to create new empty QvxRequest
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxRequest.#ctor(System.Xml.XmlDocument)">
+            <summary>
+            Constructor to create new QvxRequest 
+            </summary>
+            <param name="document"></param>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxRequest.InitializeStandaloneRequest">
+            <summary>
+            Initialize standalone connector
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxRequest.Command">
+            <summary>
+            Command to be executed by the Connector. See QvxCommand.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxRequest.Parameters">
+            <summary>
+            Array of strings. Holds command specific parameters.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxRequest.Options">
+            <summary>
+            Connection options. See QvxConnectOptions.
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.DataPipe">
+            <summary>
+            The DataPipe class contains the necessary functionality for operating a
+            QVX data pipe. Both the server end and client end are implemented.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.DataPipe.#ctor(QlikView.Qvx.QvxLibrary.QvxConnection,System.String)">
+            <summary>
+            Creates a new data pipe that others can connect to.
+            </summary>
+            <param name="pipeName">The name of the pipe.</param>
+            <param name="connection">Reference to the current connection.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="pipeName"/>
+            is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="pipeName"/>
+            is a zero-length string.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="pipeName"/>
+            is set to "anonymous", which is a reserved name.</exception>
+            <exception cref="T:System.PlatformNotSupportedException">The program is running
+            on a platform which does not support named pipes.</exception>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.DataPipe.Connect(QlikView.Qvx.QvxLibrary.QvxConnection,System.String)">
+            <summary>
+            Connects to a pipe that another process has created.
+            </summary>
+            <param name="pipeName">The name of the pipe. This should be of the
+            <param name="connection">Reference to the current connection.</param>
+            form "\\(server)\pipe\(pipename)", or "(pipename)" in which case
+            the server is assumed to be the current computer.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="pipeName"/>
+            is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="pipeName"/>
+            is a zero-length string.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="pipeName"/>
+            is set to "anonymous" which is a reserved name.</exception>
+            <returns>A DataPipe object which can be used to send data.</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.DataPipe.Connect(QlikView.Qvx.QvxLibrary.QvxConnection,System.String,System.String)">
+            <summary>
+            Connects to a pipe that another process has created on the network.
+            </summary>
+            <param name="pipeName">The name of the pipe.</param>
+            <param name="serverName">The name of the computer on which the pipe
+            <param name="connection">Reference to the current connection.</param>
+            was created. Can be null, empty, "." (full stop) or "localhost" to
+            indicate that the pipe is on this computer.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="pipeName"/>
+            is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="pipeName"/>
+            is a zero-length string.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="pipeName"/>
+            is set to "anonymous", which is a reserved name.</exception>
+            <returns>A DataPipe object which can be used to send data.</returns>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.DataPipe.GetStream">
+            <summary>
+            Gets the stream to which data is written (for clients), or from which
+            data is read (for servers).
+            </summary>
+            <returns>A Stream object which is readable for servers and writable
+            for clients.</returns>
+            <remarks><para>Every call to this method will give a separate Stream
+            object. These objects are all synchronized so that separate threads
+            can, in theory, write to them. The caller (you) must however take care
+            that the data is read or written in whole blocks or records at once,
+            otherwise the data stream will be corrupt.</para>
+            <para>The underlying stream is buffered for clients.</para>
+            <para>Calling Close or Dispose on any of the fetched objects will do
+            nothing.</para></remarks>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.DataPipe.Dispose(System.Boolean)">
+            <summary>
+            Causes the data pipe to be closed and all resources associated with
+            it released.
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxTable">
+            <summary>
+            The QvxTable element specifies data formatting information for a single table.
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxTable.Transmit(System.IO.Stream)">
+            <summary>
+            Transmit QvxTable to <paramref name="stream"/>
+            </summary>
+            <param name="stream"></param>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxTable.MajorVersion">
+            <summary>
+            Version number for the QVX format. Value - 1.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxTable.MinorVersion">
+            <summary>
+            Version number for the QVX format.  Value - 0.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxTable.TableName">
+            <summary>
+            String defining source of the data, e.g. executed SQL statement.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxTable.Fields">
+            <summary>
+            Contains QvxField specified for every table field. See QvxField.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxTable.GetRows">
+            <summary>
+            Returns the GetRowsHandler as defined when the table was 
+            created.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxTable.Item(System.String)">
+            <summary>
+            Find a field based on the field name.
+            </summary>
+            <param name="name">Name of field to look for.</param>
+            <returns>Field if found, otherwise null.</returns>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxTable.GetRowsHandler">
+            <summary>
+            Delegate which makes it possible for a custom connector to let the 
+            SDK know which method to use when getting rows.
+            </summary>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.FieldAttrType">
+            <summary>
+            The FieldAttrType tells QlikView how the data should be formatted. For
+            more details read QlikView Reference Manual Section "Number 
+            Interpretation Functions".
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.FieldAttrType.UNKNOWN">
+            <remarks>
+            Data type is unknown. If possible values are formatted as numbers, 
+            otherwise as text.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.FieldAttrType.ASCII">
+            <remarks>
+            Forces values to be formatted as text.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.FieldAttrType.INTEGER">
+            <remarks>
+            Values will be formatted as integers.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.FieldAttrType.REAL">
+            <remarks>
+            Values will be formatted as numbers with a fixed number of 
+            significant digits defined by FieldAttributes.nDec.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.FieldAttrType.FIX">
+            <remarks>
+            Values will be formatted as numbers with a fixed number of 
+            decimals defined by FieldAttributes.nDec.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.FieldAttrType.MONEY">
+            <remarks>
+            Values will be formatted as money according to the format string 
+            specified by FieldAttrType.Fmt.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.FieldAttrType.DATE">
+            <remarks>
+            Values will be formatted as dates according to the format string 
+            specified by FieldAttrType.Fmt. Values streamed as QVX_IEEE_REAL 
+            should be implemented as OLE Automation date, i.e. floating-point 
+            value counting days since midnight, 30 December 1899.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.FieldAttrType.TIME">
+            <remarks>
+            Values will be formatted as time according to the format string 
+            specified by FieldAttrType.Fmt.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.FieldAttrType.TIMESTAMP">
+            <remarks>
+            Values will be formatted as time stamps according to the format 
+            string specified by FieldAttrType.Fmt. 
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.FieldAttrType.INTERVAL">
+            <remarks>
+            Values will be formatted as time intervals according to the 
+            format string specified by FieldAttrType.Fmt.
+            </remarks>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxFieldType">
+            <summary>
+            Data type in which field values are stored in QVX formatted data stream.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxFieldType.QVX_SIGNED_INTEGER">
+            <remarks>
+            An integer value is passed in normal 2-complement binary 
+            representation. The exact layout of the value is determined by the 
+            BigEndian flag and a ByteWidth (of 1,2,4 or 8).
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxFieldType.QVX_IEEE_REAL">
+            <remarks>
+            A floating point number is passed in IEEE 754-2008 standard formats
+            (binary32 or binary64). The exact layout of the value is determined
+            by the BigEndian flag and a ByteWidth (of 4 or 8).
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxFieldType.QVX_TEXT">
+            <remarks>
+            Data is a text string that may be interpreted as a number by 
+            QlikView depending on the supplied FieldAttrType. CodePage defines
+            the encoding. 1200/1201 means UTF-16 and also defines its byte 
+            order. When the extent is QVX_FIX, binary trailing zero-padding 
+            should be used.
+            </remarks>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxFieldExtent">
+            <summary>
+            Method used to define field value length.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxFieldExtent.QVX_FIX">
+            <remarks>
+            The byte count for each field value is constant and given by 
+            ByteWidth.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxFieldExtent.QVX_COUNTED">
+            <remarks>
+            Each field value is preceded by a (unsigned) byte count of the 
+            actual data. The layout of the count is determined by the BigEndian
+            flag and a ByteWidth.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxFieldExtent.QVX_ZERO_TERMINATED">
+            <remarks>
+            Can be used for text fields. Means that the extent of the field 
+            length is a terminating zero byte (or 16-bit entity for UTF-16).
+            </remarks>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxNullRepresentation">
+            <summary>
+            Definition of different NULL value representations.
+            </summary>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxNullRepresentation.QVX_NULL_NEVER">
+            <remarks>
+            Field cannot return NULL.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxNullRepresentation.QVX_NULL_ZERO_LENGTH">
+            <remarks>
+            For field values that use QVX_COUNTED together with  
+            QVX_NULL_ZERO_LENGTH, a zero length means NULL (rather than an 
+            empty string).
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA">
+            <remarks>
+            A single byte (with binary value 1 or 0) in front of the field 
+            value signifies NULL or not. A 1 means it is NULL and the field 
+            value is not used.
+            </remarks>
+        </member>
+        <member name="F:QlikView.Qvx.QvxLibrary.QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA">
+            <remarks>
+            A single byte (with binary value 1 or 0) signifies NULL or not. A 
+            1 means it is NULL and no field value is passed. A 0 byte means a 
+            normal value follows.
+            </remarks>
+        </member>
+        <member name="T:QlikView.Qvx.QvxLibrary.QvxField">
+            <summary>
+            The QvxField element describes a single table field. It specifies the 
+            field name, format used to write the field values in the QVX formatted 
+            file, as well as how QlikView should handle Null values.
+            <para>
+            The elements Type and NullRepresentation describe how the field data
+            values are written in the QVX formatted file.
+            </para>
+            </summary>
+        </member>
+        <member name="M:QlikView.Qvx.QvxLibrary.QvxField.#ctor(System.String,QlikView.Qvx.QvxLibrary.QvxFieldType,QlikView.Qvx.QvxLibrary.QvxNullRepresentation,QlikView.Qvx.QvxLibrary.FieldAttrType)">
+            <summary>
+            Create a new QvxField to insert into a QvxTable. All fields are mandatory.
+            </summary>
+            <param name="fieldName">Name of the field.</param>
+            <param name="type">Data type in the field.</param>
+            <param name="nullRepresentation">How Null values should be represented.</param>
+            <param name="attrType">How field values should be formatted. Default value is FieldAttrType.UNKNOWN</param>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxField.FieldName">
+            <summary>
+            Field name.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxField.Type">
+            <summary>
+            Data type in which field values are written in the QVX formatted 
+            data stream. See QvxFieldType.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxField.NullRepresentation">
+            <summary>
+            Method used to handle Null values. See QvxNullRepresentation.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxField.Extent">
+            <summary>
+            Method used to define field value length. See QvxFieldExtent.
+            </summary>
+        </member>
+        <member name="P:QlikView.Qvx.QvxLibrary.QvxField.FieldFormat">
+            <summary>
+            Format specifies how QlikView should interpret the streamed data 
+            values. See FieldAttributes Type.
+            </summary>
+        </member>
+    </members>
+</doc>
