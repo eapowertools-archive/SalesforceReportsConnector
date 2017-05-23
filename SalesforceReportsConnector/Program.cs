@@ -1,4 +1,5 @@
 ﻿using System;
+using SalesforceReportsConnector.QV;
 
 namespace SalesforceReportsConnector
 {

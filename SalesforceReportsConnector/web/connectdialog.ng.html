@@ -1,0 +1,26 @@
+﻿<div class="lui-modal-background"></div>
+<div class="lui-dialog centerpoint">
+    <div class="lui-dialog__header">
+        <div class="lui-dialog__title">Select Salesforce Server</div>
+    </div>
+    <div class="lui-dialog__body">
+        <label class="lui-radiobutton">
+            <input class="lui-radiobutton__input" type="radio" aria-label="First button" name="myradio" value="1" checked>
+            <div class="lui-radiobutton__radio-wrap">
+                <span class="lui-radiobutton__radio"></span>
+                <span class="lui-radiobutton__radio-text">Use Production</span>
+            </div>
+        </label>
+        <label class="lui-radiobutton">
+            <input class="lui-radiobutton__input" type="radio" aria-label="Second button" name="myradio" value="2">
+            <div class="lui-radiobutton__radio-wrap">
+                <span class="lui-radiobutton__radio"></span>
+                <span class="lui-radiobutton__radio-text">Use Custom Server...</span>
+            </div>
+        </label>
+    </div>
+    <div class="lui-dialog__footer">
+        <button class="lui-button  lui-dialog__button" ng-click="onCancelClicked()">Cancel</button>
+        <button class="lui-button  lui-dialog__button  close-button" ng-click="showLogin()">OK</button>
+    </div>
+</div>

@@ -55,11 +55,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -84,11 +79,20 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="web\connectdialog.css" />
+    <Content Include="web\connectdialog.js" />
+    <Content Include="web\connectdialog.ng.html" />
+    <Content Include="web\salesforcelogindialog.css" />
+    <Content Include="web\salesforcelogindialog.js" />
+    <Content Include="web\salesforcelogindialog.ng.html" />
+    <Content Include="web\selectdialog.js" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>"$(ProjectDir)..\..\verpatch.exe" "$(TargetPath)" /s "QlikView Connector" "SalesforceReportsConnector"
 
-robocopy "$(TargetDir)\" "C:\Program Files\Common Files\Qlik\Custom Data\SalesforceReportsConnector" /E</PostBuildEvent>
+(robocopy "$(TargetDir)\" "C:\Program Files\Common Files\Qlik\Custom Data\SalesforceReportsConnector" /E) ^&amp; IF %25ERRORLEVEL%25 LEQ 1 exit 0</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

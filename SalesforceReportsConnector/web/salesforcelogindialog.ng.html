@@ -1,0 +1,17 @@
+﻿<div class="lui-modal-background"></div>
+<div class="lui-dialog salesforcecenterpoint">
+
+    <div class="lui-dialog__header">
+        <div class="lui-dialog__title">Paste URL Here</div>
+    </div>
+    <div class="lui-dialog__body">
+<!--
+        <iframe id="salesforceFrame" src="{{url}}" height="100%" width="100%" style="border: none;"></iframe>
+-->
+        <textarea id="salesforceURL" ng-model="sfURL"></textarea>
+    </div>
+    <div class="lui-dialog__footer">
+            <button class="lui-button  lui-dialog__button" ng-click="cancel()">Back</button>
+            <button class="lui-button  lui-dialog__button" ng-click="finish()">Finish</button>
+        </div>
+    </div>
