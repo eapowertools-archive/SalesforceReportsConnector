@@ -1,8 +1,8 @@
 ﻿define( [
     'qvangular',
-    'text!introConnector.webroot/connectdialog.ng.html',
-    'css!introConnector.webroot/connectdialog.css',
-    'introConnector.webroot/salesforcelogindialog'
+    'text!SalesforceReportsConnector.webroot/connectdialog.ng.html',
+    'css!SalesforceReportsConnector.webroot/connectdialog.css',
+    'SalesforceReportsConnector.webroot/salesforcelogindialog'
 ], function ( qvangular, template, css, salesforcelogindialog ) {
     return {
         template: template,

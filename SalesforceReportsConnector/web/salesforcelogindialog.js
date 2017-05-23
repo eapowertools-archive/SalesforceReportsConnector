@@ -1,7 +1,7 @@
 ﻿define([
 	"general.services/show-service/show-service",
-	"text!introConnector.webroot/salesforcelogindialog.ng.html",
-    'css!introConnector.webroot/salesforcelogindialog.css',
+	"text!SalesforceReportsConnector.webroot/salesforcelogindialog.ng.html",
+    'css!SalesforceReportsConnector.webroot/salesforcelogindialog.css',
 	"assets/client/dialogs/directives/dialog-directives"
 ], function (
 	showService,

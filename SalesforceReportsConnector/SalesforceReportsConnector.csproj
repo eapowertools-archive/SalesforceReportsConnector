@@ -80,17 +80,31 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="web\connectdialog.css" />
-    <Content Include="web\connectdialog.js" />
-    <Content Include="web\connectdialog.ng.html" />
-    <Content Include="web\salesforcelogindialog.css" />
-    <Content Include="web\salesforcelogindialog.js" />
-    <Content Include="web\salesforcelogindialog.ng.html" />
-    <Content Include="web\selectdialog.js" />
+    <Content Include="web\connectdialog.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="web\connectdialog.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="web\connectdialog.ng.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="web\salesforcelogindialog.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="web\salesforcelogindialog.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="web\salesforcelogindialog.ng.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="web\selectdialog.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>"$(ProjectDir)..\..\verpatch.exe" "$(TargetPath)" /s "QlikView Connector" "SalesforceReportsConnector"
+    <PostBuildEvent>"$(ProjectDir)..\..\verpatch.exe" "$(TargetPath)" /s "QlikView Connector" "Salesforce Reports Connector"
 
 (robocopy "$(TargetDir)\" "C:\Program Files\Common Files\Qlik\Custom Data\SalesforceReportsConnector" /E) ^&amp; IF %25ERRORLEVEL%25 LEQ 1 exit 0</PostBuildEvent>
   </PropertyGroup>
