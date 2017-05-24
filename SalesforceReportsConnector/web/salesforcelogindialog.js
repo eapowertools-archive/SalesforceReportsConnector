@@ -19,15 +19,24 @@
         },
         controller: ['$scope', '$document', '$window', function ($scope, $document, $window) {
             $scope.sfURL = "";
+            $scope.name = "salesforce";
+            $scope.host = "salesforce.com";
+            $scope.username = "userNameforSF";
+            $scope.password = "somePass";
 
             $scope.finish = function () {
                 // do something here to process the URL
-                console.log( $scope.sfURL );
-
+                console.log($scope.sfURL);
+                var returnVal = {
+                    name: $scope.name,
+                    host: $scope.host,
+                    username: $scope.username,
+                    password: $scope.password
+                };
 
                 $scope.destroyComponent();
                 aboutDialogIsOpened = false;
-                $scope.deferredResult.resolve();
+                $scope.deferredResult.resolve(returnVal);
             };
 
             $scope.cancel = function () {
@@ -50,10 +59,10 @@
     function show($sce, url) {
         aboutDialogIsOpened = true;
 
-        var input = {
+        var trustedURL = {
             url: $sce.trustAsResourceUrl(url)
         };
-        return showService.show(component, input).resultPromise;
+        return showService.show(component, trustedURL).resultPromise;
     }
 
     return {

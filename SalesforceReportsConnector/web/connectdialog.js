@@ -45,7 +45,11 @@
                         "&redirect_uri=https%3A%2F%2Flogin.salesforce.com%2Fservices%2Foauth2%2Fsuccess";
                     
 	
-                    salesforcelogindialog.show( $sce, url ).then( function () {
+                   salesforcelogindialog.show($sce, url).then(function (result) {
+                       var connectionString = createCustomConnectionString("SalesforceReportsConnector.exe", "host=" + result['host'] + ";");
+                       console.log(result['name'] + ":" + result['host'] + ":" + result['username'] + ":" + result['password']);
+                       input.serverside.createNewConnection(result['name'], connectionString, result['username'], result['password']);
+
                         $scope.destroyComponent();
                     });
                 }
