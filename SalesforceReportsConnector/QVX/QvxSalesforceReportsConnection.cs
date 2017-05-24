@@ -2,9 +2,9 @@
 using System.Text.RegularExpressions;
 using QlikView.Qvx.QvxLibrary;
 
-namespace SalesforceReportsConnector.QV
+namespace SalesforceReportsConnector.QVX
 {
-	internal class QvEventLogConnection : QvxConnection
+	internal class QvxSalesforceReportsConnection : QvxConnection
 	{
 		public override void Init()
 		{

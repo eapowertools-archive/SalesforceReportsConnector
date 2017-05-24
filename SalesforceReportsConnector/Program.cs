@@ -1,5 +1,5 @@
 ﻿using System;
-using SalesforceReportsConnector.QV;
+using SalesforceReportsConnector.QVX;
 
 namespace SalesforceReportsConnector
 {
@@ -13,7 +13,7 @@ namespace SalesforceReportsConnector
 		{
 			if (args != null && args.Length >= 2)
 			{
-				new QvEventLogServer().Run(args[0], args[1]);
+				new QvxSalesforceReportsServer().Run(args[0], args[1]);
 			}
 		}
 	}

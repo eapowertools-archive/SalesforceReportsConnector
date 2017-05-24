@@ -1,12 +1,12 @@
 ﻿using QlikView.Qvx.QvxLibrary;
 
-namespace SalesforceReportsConnector.QV
+namespace SalesforceReportsConnector.QVX
 {
-	internal class QvEventLogServer : QvxServer
+	internal class QvxSalesforceReportsServer : QvxServer
 	{
 		public override QvxConnection CreateConnection()
 		{
-			return new QvEventLogConnection();
+			return new QvxSalesforceReportsConnection();
 		}
 
 		public override string CreateConnectionString()
