@@ -5,7 +5,7 @@
     </div>
     <div class="lui-dialog__body">
         <h3>Name:</h3>
-        <input class="lui-input" ng-model="connectorName"></input>
+        <input class="lui-input" ng-model="connectorName" ng-change="nameChange()"></input>
         <br/>
         <label class="lui-radiobutton">
             <input class="lui-radiobutton__input" type="radio" aria-label="First button" name="myradio" value="1" checked>
@@ -24,6 +24,6 @@
     </div>
     <div class="lui-dialog__footer">
         <button class="lui-button  lui-dialog__button" ng-click="onCancelClicked()">Cancel</button>
-        <button class="lui-button  lui-dialog__button  close-button" ng-click="showLogin()">OK</button>
+        <button ng-class="okButtonBool ? 'lui-button  lui-dialog__button  close-button' : 'lui-button lui-disabled'" ng-click="showLogin()">OK</button>
     </div>
 </div>

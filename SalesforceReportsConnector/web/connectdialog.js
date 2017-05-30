@@ -10,12 +10,13 @@
             '$scope', '$sce', 'input', function ( $scope, $sce, input ) {
                 function init() {
                     $scope.isEdit = input.editMode;
+                    $scope.okButtonBool = false;
 
                     $scope.connectorName = "";
                     $scope.salesforceURL = "https://login.salesforce.com/services/oauth2/authorize?response_type=token&client_id=" +
                         "3MVG9i1HRpGLXp.qErQ40T3OFL3qRBOgiz5J6AYv5uGazuHU3waZ1hDGeuTmDXVh_EadH._6FJFCwBCkMTCXk" +
                         "&redirect_uri=https%3A%2F%2Flogin.salesforce.com%2Fservices%2Foauth2%2Fsuccess";
-                }
+                };
 
                 /* Event handlers */
 
@@ -31,7 +32,16 @@
 
                         $scope.destroyComponent();
                     } );
-                }
+                };
+
+                $scope.nameChange = function () {
+                    // if name has value, change class for button.
+                    if ( $scope.connectorName == "" ) {
+                        $scope.okButtonBool = false;
+                    } else {
+                        $scope.okButtonBool = true;
+                    }
+                };
 
 
                 /* Helper functions */
