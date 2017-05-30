@@ -1,13 +1,10 @@
 ﻿define([
 	"general.services/show-service/show-service",
 	"text!SalesforceReportsConnector.webroot/salesforcelogindialog.ng.html",
-    'css!SalesforceReportsConnector.webroot/salesforcelogindialog.css',
-	"assets/client/dialogs/directives/dialog-directives"
+    'css!SalesforceReportsConnector.webroot/salesforcelogindialog.css'
 ], function (
 	showService,
-	template,
-    css,
-    dialogDirective
+	template
 ) {
     var aboutDialogIsOpened = false;
 
