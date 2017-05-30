@@ -19,8 +19,8 @@
             <h2>Step 2</h2>
             Once you have gone through the login and authorization steps and receive an empty page with the text 'Remote Access Application Authorization', copy and paste the <b>ENTIRE</b> URL below.
             <br/>
-            <input class="lui-input" ng-model="sfURL"></input>
-            <i><font color="red" id="urlStatus">Paste URL above.</font></i> 
+            <input class="lui-input" ng-model="sfURL" ng-change="urlChange()"></input>
+            <i><font color="{{statusColour}}" id="urlStatus">{{URLStatus}}</font></i> 
         </p>
     </div>
     <div class="lui-dialog__footer">

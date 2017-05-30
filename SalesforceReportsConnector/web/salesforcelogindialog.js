@@ -23,6 +23,8 @@
             $scope.host = "salesforce.com";
             $scope.username = "userNameforSF";
             $scope.password = "somePass";
+            $scope.URLStatus = "Paste URL above.";
+            $scope.statusColour = "red";
 
             $scope.finish = function () {
                 // do something here to process the URL
@@ -48,6 +50,11 @@
             $scope.openLogin = function () {
                 $window.open($scope.url);
             };
+
+            $scope.urlChange = function () {
+                $scope.URLStatus = "BLLAAHHHH";
+                $scope.statusColour = "green";
+            }
         }]
     };
 
