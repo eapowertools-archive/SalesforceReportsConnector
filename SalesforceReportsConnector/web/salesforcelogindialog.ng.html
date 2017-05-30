@@ -2,13 +2,26 @@
 <div class="lui-dialog salesforcecenterpoint">
 
     <div class="lui-dialog__header">
-        <div class="lui-dialog__title">Paste URL Here</div>
+        <div class="lui-dialog__title">Salesforce Login and Authentication</div>
     </div>
     <div class="lui-dialog__body">
-<!--
-        <iframe id="salesforceFrame" src="{{url}}" height="100%" width="100%" style="border: none;"></iframe>
--->
-        <textarea id="salesforceURL" ng-model="sfURL"></textarea>
+        <p>
+            <h2>Step 1</h2>
+            Click the "Login/Authenticate" button below to open the Salesforce login page.
+            Once you login you will be prompted to allow the 'Qlik Sense Salesforce Connector' to access
+            some of your information.
+            <br/>
+            <button class="lui-button  lui-button--rounded" ng-click="openLogin()">Login/Authenticate</button>
+        </p>
+        <br/>
+        <br/>
+        <p>
+            <h2>Step 2</h2>
+            Once you have gone through the login and authorization steps and receive an empty page with the text 'Remote Access Application Authorization', copy and paste the <b>ENTIRE</b> URL below.
+            <br/>
+            <input class="lui-input" ng-model="sfURL"></input>
+            <i><font color="red" id="urlStatus">Paste URL above.</font></i> 
+        </p>
     </div>
     <div class="lui-dialog__footer">
             <button class="lui-button  lui-dialog__button" ng-click="cancel()">Back</button>

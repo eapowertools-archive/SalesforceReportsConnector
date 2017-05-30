@@ -38,11 +38,15 @@ namespace SalesforceReportsConnector.QVX
              * below
              */
 
-			string provider, host, username, password;
+			string provider, host, username, password, token;
 			connection.MParameters.TryGetValue("provider", out provider); // Set to the name of the connector by QlikView Engine
 			connection.MParameters.TryGetValue("userid", out username); // Set when creating new connection or from inside the QlikView Management Console (QMC)
 			connection.MParameters.TryGetValue("password", out password); // Same as for username
 			connection.MParameters.TryGetValue("host", out host); // Defined when calling createNewConnection in connectdialog.js
+			connection.MParameters.TryGetValue("token", out token); // Defined when calling createNewConnection in connectdialog.js
+
+
+			string allTheThings = string.Format("provider:{0}|userid:{1}|password={2}|host={3}|token={4}", provider, username, password, host, token);
 
 			switch (method)
 			{
@@ -50,7 +54,7 @@ namespace SalesforceReportsConnector.QVX
 					response = getInfo();
 					break;
 				case "getDatabases":
-					response = getDatabases(username, password);
+					response = getDatabases(allTheThings, password);
 					break;
 				case "getTables":
 					response = getTables(username, password, connection, userParameters[0], userParameters[1]);
@@ -79,7 +83,7 @@ namespace SalesforceReportsConnector.QVX
 			{
 				qDatabases = new Database[]
 				{
-					new Database { qName = "Salesforce Reports" }
+					new Database { qName =  username + "Salesforce Reports" }
 				}
 			};
 		}

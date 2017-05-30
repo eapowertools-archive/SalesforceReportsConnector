@@ -45,7 +45,9 @@
                 $scope.deferredResult.reject();
             };
 
-            $window.open($scope.url);
+            $scope.openLogin = function () {
+                $window.open($scope.url);
+            };
         }]
     };
 

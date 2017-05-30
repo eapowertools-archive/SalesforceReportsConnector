@@ -12,16 +12,17 @@
                     $scope.isEdit = input.editMode;
                     $scope.id = input.instanceId;
                     $scope.titleText = "Load Data Example";
+                    $scope.salesforceURL = "https://login.salesforce.com/services/oauth2/authorize?response_type=token&client_id=" +
+                        "3MVG9i1HRpGLXp.qErQ40T3OFL3qRBOgiz5J6AYv5uGazuHU3waZ1hDGeuTmDXVh_EadH._6FJFCwBCkMTCXk" +
+                        "&redirect_uri=https%3A%2F%2Flogin.salesforce.com%2Fservices%2Foauth2%2Fsuccess";
 
                     $scope.someText = "someConnectionString";
-                    $scope.provider = "introConnector.exe"; // Connector filename
                     $scope.connectionInfo = "";
                     $scope.connectionSuccessful = false;
-                    $scope.connectionString = createCustomConnectionString( $scope.provider, "host=localhost;" );
 
-                    input.serverside.sendJsonRequest( "getInfo" ).then( function ( info ) {
+                    /*input.serverside.sendJsonRequest( "getInfo" ).then( function ( info ) {
                         $scope.info = info.qMessage;
-                    } );
+                    } );*/
 
                 }
 
@@ -40,13 +41,9 @@
 
 
                 $scope.showLogin = function () {
-                   var url = "https://login.salesforce.com/services/oauth2/authorize?response_type=token&client_id=" +
-                        "3MVG9i1HRpGLXp.qErQ40T3OFL3qRBOgiz5J6AYv5uGazuHU3waZ1hDGeuTmDXVh_EadH._6FJFCwBCkMTCXk" +
-                        "&redirect_uri=https%3A%2F%2Flogin.salesforce.com%2Fservices%2Foauth2%2Fsuccess";
-                    
 	
-                   salesforcelogindialog.show($sce, url).then(function (result) {
-                       var connectionString = createCustomConnectionString("SalesforceReportsConnector.exe", "host=" + result['host'] + ";");
+                   salesforcelogindialog.show($sce, $scope.salesforceURL).then(function (result) {
+                       var connectionString = createCustomConnectionString("SalesforceReportsConnector.exe", "host=" + result['host'] + ";token=blahblah;");
                        console.log(result['name'] + ":" + result['host'] + ":" + result['username'] + ":" + result['password']);
                        input.serverside.createNewConnection(result['name'], connectionString, result['username'], result['password']);
 
