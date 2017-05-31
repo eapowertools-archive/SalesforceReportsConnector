@@ -68,11 +68,6 @@
                     }
                 };
 
-                $scope.radioSelection = function () {
-                    //$scope.connectorName = $scope.radioButtonValue;
-                };
-
-
                 /* Helper functions */
 
                 function createCustomConnectionString( filename, connectionstring ) {
