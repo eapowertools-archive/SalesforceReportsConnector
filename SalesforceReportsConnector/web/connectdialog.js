@@ -10,12 +10,19 @@
             '$scope', '$sce', 'input', function ( $scope, $sce, input ) {
                 function init() {
                     $scope.isEdit = input.editMode;
-                    $scope.okButtonBool = false;
 
+                    $scope.hasName = false;
+                    $scope.hasCustomURL = false;
+                    $scope.radioButtonValue = "production";
                     $scope.connectorName = "";
                     $scope.salesforceURL = "https://login.salesforce.com/services/oauth2/authorize?response_type=token&client_id=" +
                         "3MVG9i1HRpGLXp.qErQ40T3OFL3qRBOgiz5J6AYv5uGazuHU3waZ1hDGeuTmDXVh_EadH._6FJFCwBCkMTCXk" +
                         "&redirect_uri=https%3A%2F%2Flogin.salesforce.com%2Fservices%2Foauth2%2Fsuccess";
+                    $scope.URL = "";
+
+                    $scope.customURLStatus = "Enter custom URL here.";
+                    $scope.urlStatusColour = "red";
+
                 };
 
                 /* Event handlers */
@@ -35,12 +42,34 @@
                 };
 
                 $scope.nameChange = function () {
-                    // if name has value, change class for button.
                     if ( $scope.connectorName == "" ) {
-                        $scope.okButtonBool = false;
+                        $scope.hasName = false;
                     } else {
-                        $scope.okButtonBool = true;
+                        $scope.hasName = true;
                     }
+                };
+
+                $scope.urlChange = function () {
+                    if ($scope.URL == "") {
+                        $scope.hasCustomURL = false;
+                        $scope.urlStatusColour = "red";
+                        $scope.customURLStatus = "Enter custom URL here.";
+                    } else {
+                        var response = validateCustomURL($scope.URL);
+                        if (response['isValid']) {
+                            $scope.hasCustomURL = true;
+                            $scope.urlStatusColour = "green";
+                            $scope.customURLStatus = "URL is valid.";
+                        } else {
+                            $scope.hasCustomURL = false;
+                            $scope.urlStatusColour = "red";
+                            $scope.customURLStatus = response['message'];
+                        }
+                    }
+                };
+
+                $scope.radioSelection = function () {
+                    //$scope.connectorName = $scope.radioButtonValue;
                 };
 
 
@@ -48,7 +77,24 @@
 
                 function createCustomConnectionString( filename, connectionstring ) {
                     return "CUSTOM CONNECT TO " + "\"provider=" + filename + ";" + connectionstring + "\"";
-                }
+                };
+
+                function validateCustomURL(url) {
+                    var response = {
+                        isValid: true,
+                        message: ""
+                    }
+                    url = url.toLowerCase();
+                    if ( !url.startsWith( 'https://' ) ) {
+                        response['isValid'] = false;
+                        response['message'] = "Host must be secure (https://).";
+                    }
+                    else if (!(url.endsWith('.salesforce.com') || url.startsWith('.salesforce.com/'))) {
+                        response['isValid'] = false;
+                        response['message'] = "Server must be on the salesforce domain (*.salesforce.com).";
+                    }
+                    return response;
+                };
 
                 init();
             }

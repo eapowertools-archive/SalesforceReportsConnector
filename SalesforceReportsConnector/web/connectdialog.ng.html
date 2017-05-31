@@ -5,25 +5,27 @@
     </div>
     <div class="lui-dialog__body">
         <h3>Name:</h3>
-        <input class="lui-input" ng-model="connectorName" ng-change="nameChange()"></input>
+        <input class="lui-input lui-input--large" ng-model="connectorName" ng-change="nameChange()"></input>
         <br/>
         <label class="lui-radiobutton">
-            <input class="lui-radiobutton__input" type="radio" aria-label="First button" name="myradio" value="1" checked>
+            <input class="lui-radiobutton__input" type="radio" ng-model="radioButtonValue" value="production" ng-change="radioSelection()">
             <div class="lui-radiobutton__radio-wrap">
                 <span class="lui-radiobutton__radio"></span>
                 <span class="lui-radiobutton__radio-text">Use Production</span>
             </div>
         </label>
         <label class="lui-radiobutton">
-            <input class="lui-radiobutton__input" type="radio" aria-label="Second button" name="myradio" value="2">
+            <input class="lui-radiobutton__input" type="radio" ng-model="radioButtonValue" value="custom" ng-change="radioSelection()">
             <div class="lui-radiobutton__radio-wrap">
                 <span class="lui-radiobutton__radio"></span>
                 <span class="lui-radiobutton__radio-text">Use Custom Server...</span>
             </div>
         </label>
+        <input class="lui-input" ng-show="radioButtonValue == 'custom'" ng-model="URL" ng-change="urlChange()"></input>
+        <i><font ng-show="radioButtonValue == 'custom'" color="{{urlStatusColour}}" id="customUrlStatus">{{customURLStatus}}</font></i>
     </div>
     <div class="lui-dialog__footer">
         <button class="lui-button  lui-dialog__button" ng-click="onCancelClicked()">Cancel</button>
-        <button ng-class="okButtonBool ? 'lui-button  lui-dialog__button  close-button' : 'lui-button lui-disabled'" ng-click="showLogin()">OK</button>
+        <button ng-class="(hasName && (radioButtonValue == 'production' ? true : hasCustomURL)) ? 'lui-button  lui-dialog__button  close-button' : 'lui-button lui-disabled'" ng-click="showLogin()">OK</button>
     </div>
 </div>
