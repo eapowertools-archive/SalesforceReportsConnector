@@ -25,10 +25,23 @@ namespace SalesforceReportsConnector.QVX
 			List<QvxTable> tables = new List<QvxTable>();
 
 			string host, authHost, access_token, refresh_token;
-			this.MParameters.TryGetValue("host", out host);
-			this.MParameters.TryGetValue("authHost", out authHost);
-			this.MParameters.TryGetValue("access_token", out access_token);
-			this.MParameters.TryGetValue("refresh_token", out refresh_token);
+			try
+			{
+				this.MParameters.TryGetValue("host", out host);
+				this.MParameters.TryGetValue("authHost", out authHost);
+				this.MParameters.TryGetValue("access_token", out access_token);
+				this.MParameters.TryGetValue("refresh_token", out refresh_token);
+			}
+			catch (Exception e)
+			{
+				return tables;
+			}
+
+			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(authHost) || string.IsNullOrEmpty(access_token) || string.IsNullOrEmpty(refresh_token))
+			{
+				return tables;
+			}
+
 			Tuple<string, IList<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token);
 			this.MParameters["access_token"] = tuple.Item1;
 
