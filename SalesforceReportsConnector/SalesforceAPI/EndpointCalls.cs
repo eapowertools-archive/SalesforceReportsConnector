@@ -11,11 +11,11 @@ namespace SalesforceReportsConnector.SalesforceAPI
 	public class EndpointCalls
 	{
 		public static string CLIENT_ID = "3MVG9i1HRpGLXp.qErQ40T3OFL3qRBOgiz5J6AYv5uGazuHU3waZ1hDGeuTmDXVh_EadH._6FJFCwBCkMTCXk";
-
+		public static string SALESFORCE_API_VERSION = "v39.0";
 		public static string getAccessToken(string authHostname, string accessToken, string refreshToken, string hostname)
 		{
 			Uri baseUri = new Uri(hostname);
-			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(new Uri(baseUri, "/services/data/v39.0/"));
+			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(new Uri(baseUri, "/services/data/" + SALESFORCE_API_VERSION + "/"));
 			request.Method = "GET";
 			WebHeaderCollection headers = new WebHeaderCollection();
 			headers.Add("Authorization", "Bearer " + accessToken);
@@ -65,7 +65,6 @@ namespace SalesforceReportsConnector.SalesforceAPI
 
 		public static Tuple<string, string> getUsername(string authHostname, string accessToken, string refreshToken, string hostname, string idURL)
 		{
-			hostname = Uri.UnescapeDataString(hostname);
 			accessToken = getAccessToken(authHostname, accessToken, refreshToken, hostname);
 
 			Uri idURI = new Uri(Uri.UnescapeDataString(idURL));
@@ -87,9 +86,28 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			}
 		}
 
-		public static Tuple<string, IList<string>> getTableNameList(string host, string authHost, string accessToken, string refreshToken)
+		public static Tuple<string, IList<string>> getTableNameList(string host, string authHostname, string accessToken, string refreshToken)
 		{
-			throw new NotImplementedException();
+			accessToken = getAccessToken(authHostname, accessToken, refreshToken, host);
+
+			Uri hostUri = new Uri(host);
+			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri, "/services/data/" + SALESFORCE_API_VERSION + "/analytics/reports"));
+			request.Method = "GET";
+			WebHeaderCollection headers = new WebHeaderCollection();
+			headers.Add("Authorization", "Bearer " + accessToken);
+			request.Headers = headers;
+
+			using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+			{
+				using (Stream stream = response.GetResponseStream())
+				{
+					StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+					String responseString = reader.ReadToEnd();
+					JObject jsonResponse = JObject.Parse(responseString);
+					TempLogger.Log(responseString);
+					return new Tuple<string, IList<string>>(accessToken, new List<string>());
+				}
+			}
 		}
 	}
 }

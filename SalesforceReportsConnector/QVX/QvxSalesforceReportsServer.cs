@@ -24,7 +24,7 @@ namespace SalesforceReportsConnector.QVX
 			{
 				TempLogger.Log("I'm handling an API request");
 
-				return HandleAPIRequests(method, userParameters);
+				return HandleAPIRequests(method, userParameters, connection);
 			}
 			else
 			{
@@ -80,7 +80,7 @@ namespace SalesforceReportsConnector.QVX
 					response = new Info { qMessage = url };
 					break;
 				case "API-getUsername":
-					Tuple<string, string> tuple = EndpointCalls.getUsername(userParameters[0], userParameters[1], userParameters[2], userParameters[3], userParameters[4]);
+					Tuple<string, string> tuple = EndpointCalls.getUsername(Uri.UnescapeDataString(userParameters[0]), userParameters[1], userParameters[2], userParameters[3], userParameters[4]);
 					connection.MParameters["access_token"] = tuple.Item1;
 					response = new Info
 					{
