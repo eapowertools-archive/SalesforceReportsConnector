@@ -67,17 +67,24 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			hostname = Uri.UnescapeDataString(hostname);
 			accessToken = getAccessToken(authHostname, accessToken, refreshToken, hostname);
 
-
-
-			Uri baseUri = new Uri(hostname);
-			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(baseUri, "/services/data/v39.0/"));
+			Uri idURI = new Uri(Uri.UnescapeDataString(idURL));
+			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(idURI);
 			request.Method = "GET";
 			WebHeaderCollection headers = new WebHeaderCollection();
 			headers.Add("Authorization", "Bearer " + accessToken);
 			request.Headers = headers;
 
-
-			return "eps@qlikview.com";
+			using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+			{
+				using (Stream stream = response.GetResponseStream())
+				{
+					StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+					String responseString = reader.ReadToEnd();
+					JObject jsonResponse = JObject.Parse(responseString);
+					TempLogger.Log(responseString);
+					return jsonResponse["access_token"].Value<string>();
+				}
+			}
 		}
 	}
 }
