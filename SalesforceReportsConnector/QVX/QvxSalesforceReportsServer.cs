@@ -88,7 +88,7 @@ namespace SalesforceReportsConnector.QVX
 					string username = EndpointCalls.getUsername(userParameters[0], userParameters[1], userParameters[2], userParameters[3], userParameters[4]);
 					response = new Info
 					{
-						qMessage = string.Format("{{username: '{0}', host: '{1}' }}", username, Uri.UnescapeDataString(userParameters[3]))
+						qMessage = string.Format("{{\"username\": \"{0}\", \"host\": \"{1}\" }}", username, Uri.UnescapeDataString(userParameters[3]))
 					};
 					break;
 				default:
