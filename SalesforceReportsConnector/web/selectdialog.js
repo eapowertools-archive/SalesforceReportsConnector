@@ -21,7 +21,9 @@
                 });
             },
             getOwners: function ( /*databaseName*/) {
-                return qvangular.promise([{ qName: "" }]);
+                return serverside.sendJsonRequest("getOwner").then(function (response) {
+                    return qvangular.promise([{ qName: response.qMessage }]);
+                });
             },
             getTables: function (qDatabaseName, qOwnerName) {
                 return serverside.sendJsonRequest("getTables", qDatabaseName, qOwnerName).then(function (response) {

@@ -1,4 +1,7 @@
-﻿using QlikView.Qvx.QvxLibrary;
+using System;
+using QlikView.Qvx.QvxLibrary;
+using SalesforceReportsConnector.Logger;
+using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.QVX
 {
@@ -21,60 +24,81 @@ namespace SalesforceReportsConnector.QVX
 
 		public override string HandleJsonRequest(string method, string[] userParameters, QvxConnection connection)
 		{
-			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, "blahblahblah");
+			TempLogger.Log("I made a request");
 
+			if (method.StartsWith("API-"))
+			{
+				return HandleAPIRequests(method, userParameters);
+			}
+			else
+			{
+				return HandleRequest(method, userParameters, connection);
+			}
+		}
+
+		private string HandleRequest(string method, string[] userParameters, QvxConnection connection)
+		{
 
 			QvDataContractResponse response;
 
-			/**
-             * -- How to get hold of connection details? --
-             *
-             * Provider, username and password are always available in
-             * connection.MParameters if they exist in the connection
-             * stored in the QlikView Repository Service (QRS).
-             *
-             * If there are any other user/connector defined parameters in the
-             * connection string they can be retrieved in the same way as seen
-             * below
-             */
-
-			string provider, host, username, password, token;
+			string provider, host, username, access_token, refresh_token;
 			connection.MParameters.TryGetValue("provider", out provider); // Set to the name of the connector by QlikView Engine
 			connection.MParameters.TryGetValue("userid", out username); // Set when creating new connection or from inside the QlikView Management Console (QMC)
-			connection.MParameters.TryGetValue("password", out password); // Same as for username
 			connection.MParameters.TryGetValue("host", out host); // Defined when calling createNewConnection in connectdialog.js
-			connection.MParameters.TryGetValue("token", out token); // Defined when calling createNewConnection in connectdialog.js
+			connection.MParameters.TryGetValue("access_token", out access_token);
+			connection.MParameters.TryGetValue("refresh_token", out refresh_token);
+
+			TempLogger.Log("All the infoz");
+			TempLogger.Log(provider);
+			TempLogger.Log(username);
+			TempLogger.Log(host);
+			TempLogger.Log(access_token);
+			TempLogger.Log(refresh_token);
 
 
-			string allTheThings = string.Format("provider:{0}|userid:{1}|password={2}|host={3}|token={4}", provider, username, password, host, token);
 
 			switch (method)
 			{
-				case "getInfo":
-					response = getInfo();
-					break;
 				case "getDatabases":
-					response = getDatabases(allTheThings, password);
+					response = null;
+					//response = getDatabases(allTheThings, password);
+					break;
+				case "getOwner":
+					response = new Info { qMessage = username };
 					break;
 				case "getTables":
-					response = getTables(username, password, connection, userParameters[0], userParameters[1]);
+					response = getTables(username, connection, userParameters[0], userParameters[1]);
 					break;
 				case "getFields":
-					response = getFields(username, password, connection, userParameters[0], userParameters[1], userParameters[2]);
+					response = getFields(username, connection, userParameters[0], userParameters[1], userParameters[2]);
 					break;
 				default:
 					response = new Info { qMessage = "Unknown command" };
 					break;
 			}
-			return ToJson(response); // serializes response into JSON string
+			return ToJson(response); // serializes response into JSON string		
 		}
 
-		public QvDataContractResponse getInfo()
+		private string HandleAPIRequests(string method, string[] userParameters)
 		{
-			return new Info
+			QvDataContractResponse response;
+
+			switch (method)
 			{
-				qMessage = "Example connector for Windows Event Log. Use account sdk-user/sdk-password"
-			};
+				case "API-getSalesforcePath":
+					Uri baseUri = new Uri(userParameters[0]);
+					string url = new Uri(baseUri, string.Format("services/oauth2/authorize?response_type=token&client_id={0}&redirect_uri=https%3A%2F%2Flogin.salesforce.com%2Fservices%2Foauth2%2Fsuccess", EndpointCalls.CLIENT_ID)).AbsoluteUri;
+					response = new Info { qMessage = url };
+					break;
+				case "API-getUsername":
+					string username = EndpointCalls.getUsername(userParameters[0], userParameters[1], userParameters[2], userParameters[3], userParameters[4]);
+					response = new Info { qMessage = username };
+					break;
+				default:
+					response = new Info { qMessage = "Unknown command" };
+					break;
+			}
+			return ToJson(response);
 		}
 
 		public QvDataContractResponse getDatabases(string username, string password)
@@ -88,7 +112,7 @@ namespace SalesforceReportsConnector.QVX
 			};
 		}
 
-		public QvDataContractResponse getTables(string username, string password, QvxConnection connection, string database, string owner)
+		public QvDataContractResponse getTables(string username, QvxConnection connection, string database, string owner)
 		{
 			return new QvDataContractTableListResponse
 			{
@@ -96,9 +120,9 @@ namespace SalesforceReportsConnector.QVX
 			};
 		}
 
-		public QvDataContractResponse getFields(string username, string password, QvxConnection connection, string database, string owner, string table)
+		public QvDataContractResponse getFields(string username, QvxConnection connection, string database, string owner, string table)
 		{
-			var currentTable = connection.FindTable(table, connection.MTables);
+			QvxTable currentTable = null;
 
 			return new QvDataContractFieldListResponse
 			{

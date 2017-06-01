@@ -39,6 +39,7 @@
                 var returnVal = {
                     access_token: $scope.access_token,
                     refresh_token: $scope.refresh_token,
+                    instance_url: $scope.instance_url,
                     id: $scope.id
                 };
 
@@ -94,8 +95,6 @@
                     var indexOfEquals = value.indexOf( "=" );
                     var key = value.substr( 0, indexOfEquals );
                     var val = value.substring(indexOfEquals + 1, value.length);
-                    console.log("key:" + key);
-                    console.log( "val: " + val );
                     switch(key) {
                         case "access_token":
                             $scope.access_token = val;
