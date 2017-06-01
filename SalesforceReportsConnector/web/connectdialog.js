@@ -15,7 +15,7 @@
                     $scope.hasCustomURL = false;
                     $scope.radioButtonValue = "production";
                     $scope.connectorName = "";
-                    $scope.salesforceURL = "https://login.salesforce.com/services/oauth2/authorize?response_type=token&client_id=" +
+                    $scope.salesforcePath = "services/oauth2/authorize?response_type=token&client_id=" +
                         "3MVG9i1HRpGLXp.qErQ40T3OFL3qRBOgiz5J6AYv5uGazuHU3waZ1hDGeuTmDXVh_EadH._6FJFCwBCkMTCXk" +
                         "&redirect_uri=https%3A%2F%2Flogin.salesforce.com%2Fservices%2Foauth2%2Fsuccess";
                     $scope.URL = "";
@@ -32,10 +32,21 @@
                 };
 
                 $scope.showLogin = function () {
-                    salesforcelogindialog.show( $sce, $scope.salesforceURL ).then( function ( result ) {
-                        var connectionString = createCustomConnectionString( "SalesforceReportsConnector.exe", "host=" + result['host'] + ";token=blahblah;" );
-                        console.log( result['name'] + ":" + result['host'] + ":" + result['username'] + ":" + result['password'] );
-                        input.serverside.createNewConnection( result['name'], connectionString, result['username'], result['password'] );
+                    var url = "";
+                    if ( $scope.radioButtonValue == "production" ) {
+                        $scope.URL = "https://login.salesforce.com/";
+                    }
+
+                    if ( $scope.URL.endsWith( "/" ) ) {
+                        url = $scope.URL + $scope.salesforcePath;
+                    } else {
+                        url = $scope.URL + "/" + $scope.salesforcePath;
+                    }
+
+                    salesforcelogindialog.show($sce, url).then(function (result) {
+                        var connectionString = createCustomConnectionString("SalesforceReportsConnector.exe", "host=" + $scope.URL + ";token=blahblah;");
+                        console.log($scope.connectorName + ":" + $scope.URL + ":" + result['username']);
+                        input.serverside.createNewConnection( $scope.connectorName, connectionString, result['username'] );
 
                         $scope.destroyComponent();
                     } );

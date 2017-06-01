@@ -25,6 +25,6 @@
     </div>
     <div class="lui-dialog__footer">
             <button class="lui-button  lui-dialog__button" ng-click="cancel()">Back</button>
-            <button class="lui-button  lui-dialog__button" ng-click="finish()">Finish</button>
+            <button ng-class="validURL ? 'lui-button  lui-dialog__button' : 'lui-button lui-disabled'" ng-click="finish()">Finish</button>
         </div>
     </div>
