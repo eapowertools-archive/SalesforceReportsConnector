@@ -15,8 +15,6 @@
                     $scope.hasCustomURL = false;
                     $scope.radioButtonValue = "production";
                     $scope.connectorName = "";
-                    $scope.salesforcePath = "services/oauth2/authorize?response_type=token&client_id={0}&" +
-                    "redirect_uri=https%3A%2F%2Flogin.salesforce.com%2Fservices%2Foauth2%2Fsuccess";
                     $scope.URL = "";
 
                     $scope.customURLStatus = "Enter custom URL here.";
@@ -41,8 +39,9 @@
                         salesforcelogindialog.show($sce, url).then(function (result) {
                             $scope.destroyComponent();
                             input.serverside.sendJsonRequest("API-getUsername", $scope.URL, result['access_token'], result['refresh_token'], result['instance_url'], result['id']).then(function (info) {
-                                var username = info.qMessage;
-                                var host = info.host;
+                                var results = JSON.parse( info.qMessage );
+                                var username = results['username'];
+                                var host = results['host'];
                                 var connectionString = createCustomConnectionString("SalesforceReportsConnector.exe", "host=" + host + ";authHost=" + $scope.URL + ";access_token=" + result['access_token'] + ";refresh_token=" + result['refresh_token'] + ";");
                                 input.serverside.createNewConnection($scope.connectorName, connectionString, username); 
                             });

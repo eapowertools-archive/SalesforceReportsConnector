@@ -18,14 +18,8 @@ namespace SalesforceReportsConnector.QVX
 			return "Server=localhost";
 		}
 
-		/**
-         * QlikView 12 classes
-         */
-
 		public override string HandleJsonRequest(string method, string[] userParameters, QvxConnection connection)
 		{
-			TempLogger.Log("I made a request");
-
 			if (method.StartsWith("API-"))
 			{
 				return HandleAPIRequests(method, userParameters);
@@ -92,7 +86,10 @@ namespace SalesforceReportsConnector.QVX
 					break;
 				case "API-getUsername":
 					string username = EndpointCalls.getUsername(userParameters[0], userParameters[1], userParameters[2], userParameters[3], userParameters[4]);
-					response = new Info { qMessage = username };
+					response = new Info
+					{
+						qMessage = string.Format("{{username: '{0}', host: '{1}' }}", username, Uri.UnescapeDataString(userParameters[3]))
+					};
 					break;
 				default:
 					response = new Info { qMessage = "Unknown command" };
