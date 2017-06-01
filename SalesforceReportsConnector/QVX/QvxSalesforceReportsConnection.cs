@@ -11,17 +11,14 @@ namespace SalesforceReportsConnector.QVX
 	{
 		public override void Init()
 		{
-			var eventLogFields = new QvxField[]
-			{
-				new QvxField("Title", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-				new QvxField("Message", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
-			};
-
 			MTables = GetTables();
 		}
 
 		private List<QvxTable> GetTables()
 		{
+			TempLogger.Log("i am creating tables.");
+
+
 			List<QvxTable> tables = new List<QvxTable>();
 
 			string host, authHost, access_token, refresh_token;
@@ -34,13 +31,19 @@ namespace SalesforceReportsConnector.QVX
 			}
 			catch (Exception e)
 			{
+				TempLogger.Log(e.Message);
 				return tables;
 			}
+
+			TempLogger.Log("past the exceptions");
+
 
 			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(authHost) || string.IsNullOrEmpty(access_token) || string.IsNullOrEmpty(refresh_token))
 			{
 				return tables;
 			}
+
+			TempLogger.Log("i got here");
 
 			Tuple<string, IList<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token);
 			this.MParameters["access_token"] = tuple.Item1;
@@ -50,13 +53,13 @@ namespace SalesforceReportsConnector.QVX
 				tables.Add(new QvxTable()
 				{
 					TableName = tableName,
-					Fields = new QvxField[] {},
+					Fields = new QvxField[] { },
 					GetRows = GetApplicationEvents
 				});
 			}
 
 			return tables;
-		} 
+		}
 
 		private IEnumerable<QvxDataRow> GetApplicationEvents()
 		{

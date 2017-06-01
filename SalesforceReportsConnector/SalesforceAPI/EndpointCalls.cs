@@ -66,6 +66,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 		public static Tuple<string, string> getUsername(string authHostname, string accessToken, string refreshToken, string hostname, string idURL)
 		{
 			accessToken = getAccessToken(authHostname, accessToken, refreshToken, hostname);
+			TempLogger.Log("got an access token");
 
 			Uri idURI = new Uri(Uri.UnescapeDataString(idURL));
 			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(idURI);
@@ -81,6 +82,8 @@ namespace SalesforceReportsConnector.SalesforceAPI
 					StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 					String responseString = reader.ReadToEnd();
 					JObject jsonResponse = JObject.Parse(responseString);
+					TempLogger.Log("about to return from getUserName");
+
 					return new Tuple<string, string>(accessToken, jsonResponse["username"].Value<string>());
 				}
 			}
@@ -104,6 +107,8 @@ namespace SalesforceReportsConnector.SalesforceAPI
 					StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 					String responseString = reader.ReadToEnd();
 					JObject jsonResponse = JObject.Parse(responseString);
+					TempLogger.Log("reports?");
+
 					TempLogger.Log(responseString);
 					return new Tuple<string, IList<string>>(accessToken, new List<string>());
 				}
