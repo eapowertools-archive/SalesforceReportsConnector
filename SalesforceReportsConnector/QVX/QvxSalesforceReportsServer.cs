@@ -22,10 +22,14 @@ namespace SalesforceReportsConnector.QVX
 		{
 			if (method.StartsWith("API-"))
 			{
+				TempLogger.Log("I'm handling an API request");
+
 				return HandleAPIRequests(method, userParameters);
 			}
 			else
 			{
+				TempLogger.Log("I'm handling another request");
+
 				return HandleRequest(method, userParameters, connection);
 			}
 		}
@@ -35,10 +39,11 @@ namespace SalesforceReportsConnector.QVX
 
 			QvDataContractResponse response;
 
-			string provider, host, username, access_token, refresh_token;
+			string provider, host, authHost, username, access_token, refresh_token;
 			connection.MParameters.TryGetValue("provider", out provider); // Set to the name of the connector by QlikView Engine
 			connection.MParameters.TryGetValue("userid", out username); // Set when creating new connection or from inside the QlikView Management Console (QMC)
-			connection.MParameters.TryGetValue("host", out host); // Defined when calling createNewConnection in connectdialog.js
+			connection.MParameters.TryGetValue("host", out host);
+			connection.MParameters.TryGetValue("authHost", out authHost);
 			connection.MParameters.TryGetValue("access_token", out access_token);
 			connection.MParameters.TryGetValue("refresh_token", out refresh_token);
 
@@ -51,10 +56,10 @@ namespace SalesforceReportsConnector.QVX
 					response = new Info { qMessage = username };
 					break;
 				case "getTables":
-					response = getTables(username, connection, userParameters[0], userParameters[1]);
+					response = getTables(connection);
 					break;
 				case "getFields":
-					response = getFields(username, connection, userParameters[0], userParameters[1], userParameters[2]);
+					response = getFields(connection, userParameters[0]);
 					break;
 				default:
 					response = new Info { qMessage = "Unknown command" };
@@ -63,7 +68,7 @@ namespace SalesforceReportsConnector.QVX
 			return ToJson(response); // serializes response into JSON string		
 		}
 
-		private string HandleAPIRequests(string method, string[] userParameters)
+		private string HandleAPIRequests(string method, string[] userParameters, QvxConnection connection)
 		{
 			QvDataContractResponse response;
 
@@ -75,10 +80,11 @@ namespace SalesforceReportsConnector.QVX
 					response = new Info { qMessage = url };
 					break;
 				case "API-getUsername":
-					string username = EndpointCalls.getUsername(userParameters[0], userParameters[1], userParameters[2], userParameters[3], userParameters[4]);
+					Tuple<string, string> tuple = EndpointCalls.getUsername(userParameters[0], userParameters[1], userParameters[2], userParameters[3], userParameters[4]);
+					connection.MParameters["access_token"] = tuple.Item1;
 					response = new Info
 					{
-						qMessage = string.Format("{{\"username\": \"{0}\", \"host\": \"{1}\" }}", username, Uri.UnescapeDataString(userParameters[3]))
+						qMessage = string.Format("{{\"username\": \"{0}\", \"host\": \"{1}\" }}", tuple.Item2, Uri.UnescapeDataString(userParameters[3]))
 					};
 					break;
 				default:
@@ -99,7 +105,7 @@ namespace SalesforceReportsConnector.QVX
 			};
 		}
 
-		public QvDataContractResponse getTables(string username, QvxConnection connection, string database, string owner)
+		public QvDataContractResponse getTables(QvxConnection connection)
 		{
 			return new QvDataContractTableListResponse
 			{
@@ -107,7 +113,7 @@ namespace SalesforceReportsConnector.QVX
 			};
 		}
 
-		public QvDataContractResponse getFields(string username, QvxConnection connection, string database, string owner, string table)
+		public QvDataContractResponse getFields(QvxConnection connection, string table)
 		{
 			QvxTable currentTable = null;
 

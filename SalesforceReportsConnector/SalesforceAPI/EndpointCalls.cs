@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -62,7 +63,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			}
 		}
 
-		public static string getUsername(string authHostname, string accessToken, string refreshToken, string hostname, string idURL)
+		public static Tuple<string, string> getUsername(string authHostname, string accessToken, string refreshToken, string hostname, string idURL)
 		{
 			hostname = Uri.UnescapeDataString(hostname);
 			accessToken = getAccessToken(authHostname, accessToken, refreshToken, hostname);
@@ -81,9 +82,14 @@ namespace SalesforceReportsConnector.SalesforceAPI
 					StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 					String responseString = reader.ReadToEnd();
 					JObject jsonResponse = JObject.Parse(responseString);
-					return jsonResponse["username"].Value<string>();
+					return new Tuple<string, string>(accessToken, jsonResponse["username"].Value<string>());
 				}
 			}
+		}
+
+		public static Tuple<string, IList<string>> getTableNameList(string host, string authHost, string accessToken, string refreshToken)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

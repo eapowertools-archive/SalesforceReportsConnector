@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using QlikView.Qvx.QvxLibrary;
+using SalesforceReportsConnector.Logger;
+using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.QVX
 {
@@ -8,26 +11,39 @@ namespace SalesforceReportsConnector.QVX
 	{
 		public override void Init()
 		{
-			QvxLog.SetLogLevels(true, true);
-
-			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "Init()");
-
 			var eventLogFields = new QvxField[]
 			{
 				new QvxField("Title", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
 				new QvxField("Message", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
 			};
 
-			MTables = new List<QvxTable>
-			{
-				new QvxTable
-				{
-					TableName = "DummyData",
-					GetRows = GetApplicationEvents,
-					Fields = eventLogFields
-				}
-			};
+			MTables = GetTables();
 		}
+
+		private List<QvxTable> GetTables()
+		{
+			List<QvxTable> tables = new List<QvxTable>();
+
+			string host, authHost, access_token, refresh_token;
+			this.MParameters.TryGetValue("host", out host);
+			this.MParameters.TryGetValue("authHost", out authHost);
+			this.MParameters.TryGetValue("access_token", out access_token);
+			this.MParameters.TryGetValue("refresh_token", out refresh_token);
+			Tuple<string, IList<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token);
+			this.MParameters["access_token"] = tuple.Item1;
+
+			foreach (string tableName in tuple.Item2)
+			{
+				tables.Add(new QvxTable()
+				{
+					TableName = tableName,
+					Fields = new QvxField[] {},
+					GetRows = GetApplicationEvents
+				});
+			}
+
+			return tables;
+		} 
 
 		private IEnumerable<QvxDataRow> GetApplicationEvents()
 		{
@@ -52,6 +68,9 @@ namespace SalesforceReportsConnector.QVX
              * In this example it is an escaped double quote that is
              * the quoteprefix/suffix
              */
+			TempLogger.Log("Extract Query");
+			TempLogger.Log(query);
+
 			query = Regex.Replace(query, "\\\"", "");
 
 			return base.ExtractQuery(query, qvxTables);

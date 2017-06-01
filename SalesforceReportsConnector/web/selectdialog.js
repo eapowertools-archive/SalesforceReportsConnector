@@ -26,12 +26,12 @@
                 });
             },
             getTables: function (qDatabaseName, qOwnerName) {
-                return serverside.sendJsonRequest("getTables", qDatabaseName, qOwnerName).then(function (response) {
+                return serverside.sendJsonRequest("getTables").then(function (response) {
                     return response.qTables;
                 });
             },
             getFields: function (qDatabaseName, qOwnerName, qTableName) {
-                return serverside.sendJsonRequest("getFields", qDatabaseName, qOwnerName, qTableName).then(function (response) {
+                return serverside.sendJsonRequest("getFields", qTableName).then(function (response) {
                     return response.qFields;
                 });
             },
