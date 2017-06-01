@@ -93,7 +93,9 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			accessToken = getAccessToken(authHostname, accessToken, refreshToken, host);
 
 			Uri hostUri = new Uri(host);
-			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri, "/services/data/" + SALESFORCE_API_VERSION + "/analytics/reports"));
+
+			//HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri, "/services/data/" + SALESFORCE_API_VERSION + "/analytics/reports"));
+			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri, "/services/data/" + SALESFORCE_API_VERSION + "/sobjects/Report/listviews"));
 			request.Method = "GET";
 			WebHeaderCollection headers = new WebHeaderCollection();
 			headers.Add("Authorization", "Bearer " + accessToken);
