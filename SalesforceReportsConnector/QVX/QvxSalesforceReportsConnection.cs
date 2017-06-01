@@ -16,9 +16,6 @@ namespace SalesforceReportsConnector.QVX
 
 		private List<QvxTable> GetTables()
 		{
-			TempLogger.Log("i am creating tables.");
-
-
 			List<QvxTable> tables = new List<QvxTable>();
 
 			string host, authHost, access_token, refresh_token;
@@ -31,22 +28,20 @@ namespace SalesforceReportsConnector.QVX
 			}
 			catch (Exception e)
 			{
-				TempLogger.Log(e.Message);
 				return tables;
 			}
-
-			TempLogger.Log("past the exceptions");
-
 
 			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(authHost) || string.IsNullOrEmpty(access_token) || string.IsNullOrEmpty(refresh_token))
 			{
 				return tables;
 			}
 
-			TempLogger.Log("i got here");
-
 			Tuple<string, IList<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token);
+			TempLogger.Log("got a tuple back");
+
 			this.MParameters["access_token"] = tuple.Item1;
+			TempLogger.Log("set that tuple tuple back");
+
 
 			foreach (string tableName in tuple.Item2)
 			{

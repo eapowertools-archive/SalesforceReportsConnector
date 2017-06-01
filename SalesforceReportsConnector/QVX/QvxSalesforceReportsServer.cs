@@ -22,14 +22,10 @@ namespace SalesforceReportsConnector.QVX
 		{
 			if (method.StartsWith("API-"))
 			{
-				TempLogger.Log("I'm handling an API request" + method);
-
 				return HandleAPIRequests(method, userParameters, connection);
 			}
 			else
 			{
-				TempLogger.Log("I'm handling another request");
-
 				return HandleRequest(method, userParameters, connection);
 			}
 		}
@@ -80,12 +76,8 @@ namespace SalesforceReportsConnector.QVX
 					response = new Info { qMessage = url };
 					break;
 				case "API-getUsername":
-					TempLogger.Log("about to make the request");
 					Tuple<string, string> tuple = EndpointCalls.getUsername(userParameters[0], userParameters[1], userParameters[2], Uri.UnescapeDataString(userParameters[3]), userParameters[4]);
-					TempLogger.Log("going to set a tuple");
-
 					connection.MParameters["access_token"] = tuple.Item1;
-					TempLogger.Log("set the tuple!");
 
 					response = new Info
 					{

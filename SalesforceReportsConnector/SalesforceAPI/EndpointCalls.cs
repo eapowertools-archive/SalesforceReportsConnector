@@ -66,7 +66,6 @@ namespace SalesforceReportsConnector.SalesforceAPI
 		public static Tuple<string, string> getUsername(string authHostname, string accessToken, string refreshToken, string hostname, string idURL)
 		{
 			accessToken = getAccessToken(authHostname, accessToken, refreshToken, hostname);
-			TempLogger.Log("got an access token");
 
 			Uri idURI = new Uri(Uri.UnescapeDataString(idURL));
 			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(idURI);
@@ -99,19 +98,30 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			WebHeaderCollection headers = new WebHeaderCollection();
 			headers.Add("Authorization", "Bearer " + accessToken);
 			request.Headers = headers;
+			TempLogger.Log("acout to send the messaggeee");
 
-			using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+
+			try
 			{
-				using (Stream stream = response.GetResponseStream())
+				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
 				{
-					StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-					String responseString = reader.ReadToEnd();
-					JObject jsonResponse = JObject.Parse(responseString);
-					TempLogger.Log("reports?");
+					using (Stream stream = response.GetResponseStream())
+					{
+						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+						String responseString = reader.ReadToEnd();
+						//JObject jsonResponse = JObject.Parse(responseString);
+						TempLogger.Log("reports?");
 
-					TempLogger.Log(responseString);
-					return new Tuple<string, IList<string>>(accessToken, new List<string>());
+						TempLogger.Log(responseString);
+						return new Tuple<string, IList<string>>(accessToken, new List<string>());
+					}
 				}
+			}
+			catch (Exception e)
+			{
+				TempLogger.Log(e.Message);
+				return new Tuple<string, IList<string>>(accessToken, new List<string>());
+
 			}
 		}
 	}
