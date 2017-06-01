@@ -42,19 +42,9 @@ namespace SalesforceReportsConnector.QVX
 			connection.MParameters.TryGetValue("access_token", out access_token);
 			connection.MParameters.TryGetValue("refresh_token", out refresh_token);
 
-			TempLogger.Log("All the infoz");
-			TempLogger.Log(provider);
-			TempLogger.Log(username);
-			TempLogger.Log(host);
-			TempLogger.Log(access_token);
-			TempLogger.Log(refresh_token);
-
-
-
 			switch (method)
 			{
 				case "getDatabases":
-					response = null;
 					response = getDatabases();
 					break;
 				case "getOwner":

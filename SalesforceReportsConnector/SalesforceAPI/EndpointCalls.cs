@@ -81,8 +81,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 					StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 					String responseString = reader.ReadToEnd();
 					JObject jsonResponse = JObject.Parse(responseString);
-					TempLogger.Log(responseString);
-					return jsonResponse["access_token"].Value<string>();
+					return jsonResponse["username"].Value<string>();
 				}
 			}
 		}
