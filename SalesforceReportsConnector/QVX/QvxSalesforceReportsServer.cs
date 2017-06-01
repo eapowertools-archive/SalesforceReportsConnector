@@ -55,7 +55,7 @@ namespace SalesforceReportsConnector.QVX
 			{
 				case "getDatabases":
 					response = null;
-					//response = getDatabases(allTheThings, password);
+					response = getDatabases();
 					break;
 				case "getOwner":
 					response = new Info { qMessage = username };
@@ -98,13 +98,13 @@ namespace SalesforceReportsConnector.QVX
 			return ToJson(response);
 		}
 
-		public QvDataContractResponse getDatabases(string username, string password)
+		public QvDataContractResponse getDatabases()
 		{
 			return new QvDataContractDatabaseListResponse
 			{
 				qDatabases = new Database[]
 				{
-					new Database { qName =  username + "Salesforce Reports" }
+					new Database { qName = "Salesforce Reports" }
 				}
 			};
 		}
