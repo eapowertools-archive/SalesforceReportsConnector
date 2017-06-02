@@ -14,7 +14,6 @@ namespace SalesforceReportsConnector.SalesforceAPI
 	{
 		public static string CLIENT_ID = "3MVG9i1HRpGLXp.qErQ40T3OFL3qRBOgiz5J6AYv5uGazuHU3waZ1hDGeuTmDXVh_EadH._6FJFCwBCkMTCXk";
 		public static string SALESFORCE_API_VERSION = "v39.0";
-		public static IDictionary<string, string> DatabaseDictionary { get; set; } 
 
 		public static string getAccessToken(string authHostname, string accessToken, string refreshToken, string hostname)
 		{
@@ -127,21 +126,49 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			}
 		}
 
-		public static Tuple<string, IEnumerable<string>> getTableNameList(string host, string authHostname, string accessToken, string refreshToken, string databaseId)
+		public static Tuple<string, IEnumerable<string>> getTableNameList(string host, string authHostname, string accessToken, string refreshToken, string databaseName)
 		{
 			accessToken = getAccessToken(authHostname, accessToken, refreshToken, host);
 			Uri hostUri = new Uri(host);
 
-			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
-				"https://eu1.salesforce.com/services/data/" + SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Report WHERE OwnerId = '{0}' ORDER BY Name", databaseId)));
+			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
+				"https://eu1.salesforce.com/services/data/" + SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Folder WHERE Type = 'Report' AND Name = '{0}' ORDER BY Name", databaseName)));
 			request.Method = "GET";
 			WebHeaderCollection headers = new WebHeaderCollection();
 			headers.Add("Authorization", "Bearer " + accessToken);
 			request.Headers = headers;
 
+			string databaseId = "";
 			try
 			{
-				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
+				using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+				{
+					using (Stream stream = response.GetResponseStream())
+					{
+						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+						String responseString = reader.ReadToEnd();
+						JObject jsonResponse = JObject.Parse(responseString);
+						IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
+						TempLogger.Log("folders have: " + folders.Count());
+						if (folders.Count() > 1)
+						{
+							throw new DataMisalignedException("Too many matches for folder: " + databaseName);
+						}
+						JObject firstFolder = folders.First();
+						databaseId = firstFolder["Id"].Value<string>();
+					}
+				}
+
+				accessToken = getAccessToken(authHostname, accessToken, refreshToken, host);
+				hostUri = new Uri(host);
+				request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
+					"https://eu1.salesforce.com/services/data/" + SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Report WHERE OwnerId = '{0}' ORDER BY Name", databaseId)));
+				request.Method = "GET";
+				headers = new WebHeaderCollection();
+				headers.Add("Authorization", "Bearer " + accessToken);
+				request.Headers = headers;
+
+				using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
 				{
 					using (Stream stream = response.GetResponseStream())
 					{
@@ -153,12 +180,12 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						return new Tuple<string, IEnumerable<string>>(accessToken, tableStringList);
 					}
 				}
+
 			}
 			catch (Exception e)
 			{
 				TempLogger.Log(e.Message);
 				return new Tuple<string, IEnumerable<string>>(accessToken, new List<string>());
-
 			}
 		}
 	}

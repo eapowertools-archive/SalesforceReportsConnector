@@ -98,8 +98,6 @@ namespace SalesforceReportsConnector.QVX
 			Tuple<string, IDictionary<string, string>> tuple = EndpointCalls.GetReportFoldersList(host, authHost, access_token, refresh_token);
 			connection.MParameters["access_token"] = tuple.Item1;
 
-			EndpointCalls.DatabaseDictionary = tuple.Item2;
-
 			return new QvDataContractDatabaseListResponse
 			{
 				qDatabases = tuple.Item2.Keys.Select(name => new Database() {qName = name}).ToArray()
@@ -108,15 +106,14 @@ namespace SalesforceReportsConnector.QVX
 
 		public QvDataContractResponse getTables(QvxConnection connection, string host, string authHost, string access_token, string refresh_token, string folderName)
 		{
-			string folderKey = EndpointCalls.DatabaseDictionary[folderName];
 
-			if (connection.MParameters.ContainsKey("folder_key"))
+			if (connection.MParameters.ContainsKey("folder_name"))
 			{
-				connection.MParameters["folder_key"] = folderKey;
+				connection.MParameters["folder_name"] = folderName;
 			}
 			else
 			{
-				connection.MParameters.Add("folder_key", folderKey);
+				connection.MParameters.Add("folder_name", folderName);
 			}
 			TempLogger.Log("calling init");
 
