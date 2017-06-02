@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using SalesforceReportsConnector.Logger;
@@ -13,6 +14,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 	{
 		public static string CLIENT_ID = "3MVG9i1HRpGLXp.qErQ40T3OFL3qRBOgiz5J6AYv5uGazuHU3waZ1hDGeuTmDXVh_EadH._6FJFCwBCkMTCXk";
 		public static string SALESFORCE_API_VERSION = "v39.0";
+		public static IDictionary<string, string> DatabaseDictionary { get; set; } 
 
 		public static string getAccessToken(string authHostname, string accessToken, string refreshToken, string hostname)
 		{

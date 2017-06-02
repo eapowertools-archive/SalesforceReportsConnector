@@ -9,8 +9,6 @@ namespace SalesforceReportsConnector.QVX
 {
 	internal class QvxSalesforceReportsServer : QvxServer
 	{
-		public static IDictionary<string, string> DatabaseDictionary { get; set; } 
-
 		public override QvxConnection CreateConnection()
 		{
 			return new QvxSalesforceReportsConnection();
@@ -99,34 +97,18 @@ namespace SalesforceReportsConnector.QVX
 		{
 			Tuple<string, IDictionary<string, string>> tuple = EndpointCalls.GetReportFoldersList(host, authHost, access_token, refresh_token);
 			connection.MParameters["access_token"] = tuple.Item1;
-			DatabaseDictionary = new Dictionary<string, string>(tuple.Item2);
+
+			EndpointCalls.DatabaseDictionary = tuple.Item2;
 
 			return new QvDataContractDatabaseListResponse
 			{
-				qDatabases = DatabaseDictionary.Keys.Select(name => new Database() {qName = name}).ToArray()
+				qDatabases = tuple.Item2.Keys.Select(name => new Database() {qName = name}).ToArray()
 			};
 		}
 
 		public QvDataContractResponse getTables(QvxConnection connection, string host, string authHost, string access_token, string refresh_token, string folderName)
 		{
-			TempLogger.Log("baha");
-			try
-			{
-				TempLogger.Log("getting tables: " + folderName + " - " + DatabaseDictionary.Count);
-			}
-			catch (Exception e)
-			{
-				TempLogger.Log(e.Message);
-			}
-
-			foreach (KeyValuePair<string, string> keyValuePair in DatabaseDictionary)
-			{
-				TempLogger.Log(keyValuePair.Key + " - " + keyValuePair.Value);
-			}
-			string folderKey = DatabaseDictionary[folderName];
-
-			TempLogger.Log("got the key: " + folderKey);
-
+			string folderKey = EndpointCalls.DatabaseDictionary[folderName];
 
 			if (connection.MParameters.ContainsKey("folder_key"))
 			{
