@@ -9,7 +9,7 @@ namespace SalesforceReportsConnector.QVX
 {
 	internal class QvxSalesforceReportsServer : QvxServer
 	{
-		public IDictionary<string, string> DatabaseDictionary { get; set; } 
+		public static IDictionary<string, string> DatabaseDictionary { get; set; } 
 
 		public override QvxConnection CreateConnection()
 		{
@@ -56,7 +56,7 @@ namespace SalesforceReportsConnector.QVX
 					response = new Info { qMessage = username };
 					break;
 				case "getTables":
-					response = getTables(connection);
+					response = getTables(connection, host, authHost, access_token, refresh_token, userParameters[0]);
 					break;
 				case "getFields":
 					response = getFields(connection, userParameters[0]);
@@ -99,7 +99,7 @@ namespace SalesforceReportsConnector.QVX
 		{
 			Tuple<string, IDictionary<string, string>> tuple = EndpointCalls.GetReportFoldersList(host, authHost, access_token, refresh_token);
 			connection.MParameters["access_token"] = tuple.Item1;
-			DatabaseDictionary = tuple.Item2;
+			DatabaseDictionary = new Dictionary<string, string>(tuple.Item2);
 
 			return new QvDataContractDatabaseListResponse
 			{
@@ -107,8 +107,39 @@ namespace SalesforceReportsConnector.QVX
 			};
 		}
 
-		public QvDataContractResponse getTables(QvxConnection connection)
+		public QvDataContractResponse getTables(QvxConnection connection, string host, string authHost, string access_token, string refresh_token, string folderName)
 		{
+			TempLogger.Log("baha");
+			try
+			{
+				TempLogger.Log("getting tables: " + folderName + " - " + DatabaseDictionary.Count);
+			}
+			catch (Exception e)
+			{
+				TempLogger.Log(e.Message);
+			}
+
+			foreach (KeyValuePair<string, string> keyValuePair in DatabaseDictionary)
+			{
+				TempLogger.Log(keyValuePair.Key + " - " + keyValuePair.Value);
+			}
+			string folderKey = DatabaseDictionary[folderName];
+
+			TempLogger.Log("got the key: " + folderKey);
+
+
+			if (connection.MParameters.ContainsKey("folder_key"))
+			{
+				connection.MParameters["folder_key"] = folderKey;
+			}
+			else
+			{
+				connection.MParameters.Add("folder_key", folderKey);
+			}
+			TempLogger.Log("calling init");
+
+			connection.Init();
+
 			return new QvDataContractTableListResponse
 			{
 				qTables = connection.MTables

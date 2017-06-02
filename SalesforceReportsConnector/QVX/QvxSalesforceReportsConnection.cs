@@ -18,29 +18,37 @@ namespace SalesforceReportsConnector.QVX
 		{
 			List<QvxTable> tables = new List<QvxTable>();
 
-			string host, authHost, access_token, refresh_token;
+			string host, authHost, access_token, refresh_token, folder_key;
 			try
 			{
 				this.MParameters.TryGetValue("host", out host);
 				this.MParameters.TryGetValue("authHost", out authHost);
 				this.MParameters.TryGetValue("access_token", out access_token);
 				this.MParameters.TryGetValue("refresh_token", out refresh_token);
+				this.MParameters.TryGetValue("folder_key", out folder_key);
 			}
 			catch (Exception e)
 			{
 				return tables;
 			}
 
-			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(authHost) || string.IsNullOrEmpty(access_token) || string.IsNullOrEmpty(refresh_token))
+			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(authHost) || string.IsNullOrEmpty(access_token) || string.IsNullOrEmpty(refresh_token) || string.IsNullOrEmpty(folder_key))
 			{
 				return tables;
 			}
 
-			Tuple<string, IList<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token);
+			TempLogger.Log("Ok, ready to get tables");
+
+			Tuple<string, IEnumerable<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token, folder_key);
 			this.MParameters["access_token"] = tuple.Item1;
+
+			TempLogger.Log("Got my tables");
+
 
 			foreach (string tableName in tuple.Item2)
 			{
+				TempLogger.Log("Table: " + tableName);
+
 				tables.Add(new QvxTable()
 				{
 					TableName = tableName,

@@ -26,7 +26,7 @@
                 });
             },
             getTables: function (qDatabaseName, qOwnerName) {
-                return serverside.sendJsonRequest("getTables").then(function (response) {
+                return serverside.sendJsonRequest("getTables", qDatabaseName).then(function (response) {
                     return response.qTables;
                 });
             },

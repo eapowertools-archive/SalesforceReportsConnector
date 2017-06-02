@@ -13,6 +13,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 	{
 		public static string CLIENT_ID = "3MVG9i1HRpGLXp.qErQ40T3OFL3qRBOgiz5J6AYv5uGazuHU3waZ1hDGeuTmDXVh_EadH._6FJFCwBCkMTCXk";
 		public static string SALESFORCE_API_VERSION = "v39.0";
+
 		public static string getAccessToken(string authHostname, string accessToken, string refreshToken, string hostname)
 		{
 			Uri baseUri = new Uri(hostname);
@@ -124,19 +125,17 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			}
 		}
 
-		public static Tuple<string, IList<string>> getTableNameList(string host, string authHostname, string accessToken, string refreshToken)
+		public static Tuple<string, IEnumerable<string>> getTableNameList(string host, string authHostname, string accessToken, string refreshToken, string databaseId)
 		{
 			accessToken = getAccessToken(authHostname, accessToken, refreshToken, host);
-			TempLogger.Log("auth token: " + accessToken);
 			Uri hostUri = new Uri(host);
 
-			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri, "/services/data/" + SALESFORCE_API_VERSION + "/analytics/reports"));
+			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
+				"https://eu1.salesforce.com/services/data/" + SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Report WHERE OwnerId = '{0}' ORDER BY Name", databaseId)));
 			request.Method = "GET";
 			WebHeaderCollection headers = new WebHeaderCollection();
 			headers.Add("Authorization", "Bearer " + accessToken);
 			request.Headers = headers;
-			TempLogger.Log("acout to send the messaggeee");
-
 
 			try
 			{
@@ -146,18 +145,17 @@ namespace SalesforceReportsConnector.SalesforceAPI
 					{
 						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 						String responseString = reader.ReadToEnd();
-						//JObject jsonResponse = JObject.Parse(responseString);
-						TempLogger.Log("reports?");
-
-						TempLogger.Log(responseString);
-						return new Tuple<string, IList<string>>(accessToken, new List<string>());
+						JObject jsonResponse = JObject.Parse(responseString);
+						IEnumerable<JObject> tables = jsonResponse["records"].Values<JObject>();
+						IEnumerable<string> tableStringList = tables.Select(t => t["Name"].Value<string>());
+						return new Tuple<string, IEnumerable<string>>(accessToken, tableStringList);
 					}
 				}
 			}
 			catch (Exception e)
 			{
 				TempLogger.Log(e.Message);
-				return new Tuple<string, IList<string>>(accessToken, new List<string>());
+				return new Tuple<string, IEnumerable<string>>(accessToken, new List<string>());
 
 			}
 		}
