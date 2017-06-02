@@ -37,13 +37,8 @@ namespace SalesforceReportsConnector.QVX
 				return tables;
 			}
 
-			TempLogger.Log("Ok, ready to get tables");
-
 			Tuple<string, IEnumerable<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token, folder_name);
 			this.MParameters["access_token"] = tuple.Item1;
-
-			TempLogger.Log("Got my tables");
-
 
 			foreach (string tableName in tuple.Item2)
 			{
@@ -83,8 +78,6 @@ namespace SalesforceReportsConnector.QVX
              * In this example it is an escaped double quote that is
              * the quoteprefix/suffix
              */
-			TempLogger.Log("Extract Query");
-			TempLogger.Log(query);
 
 			query = Regex.Replace(query, "\\\"", "");
 

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using QlikView.Qvx.QvxLibrary;
-using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.QVX
@@ -34,7 +33,6 @@ namespace SalesforceReportsConnector.QVX
 
 		private string HandleRequest(string method, string[] userParameters, QvxConnection connection)
 		{
-
 			QvDataContractResponse response;
 
 			string provider, host, authHost, username, access_token, refresh_token;
@@ -100,13 +98,12 @@ namespace SalesforceReportsConnector.QVX
 
 			return new QvDataContractDatabaseListResponse
 			{
-				qDatabases = tuple.Item2.Keys.Select(name => new Database() {qName = name}).ToArray()
+				qDatabases = tuple.Item2.Keys.Select(name => new Database() { qName = name }).ToArray()
 			};
 		}
 
 		public QvDataContractResponse getTables(QvxConnection connection, string host, string authHost, string access_token, string refresh_token, string folderName)
 		{
-
 			if (connection.MParameters.ContainsKey("folder_name"))
 			{
 				connection.MParameters["folder_name"] = folderName;
@@ -115,7 +112,6 @@ namespace SalesforceReportsConnector.QVX
 			{
 				connection.MParameters.Add("folder_name", folderName);
 			}
-			TempLogger.Log("calling init");
 
 			connection.Init();
 

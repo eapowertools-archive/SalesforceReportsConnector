@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using SalesforceReportsConnector.Logger;
 
 namespace SalesforceReportsConnector.SalesforceAPI
 {
@@ -57,7 +55,6 @@ namespace SalesforceReportsConnector.SalesforceAPI
 							return response["access_token"].Value<string>();
 						}
 					}
-
 				}
 				else
 				{
@@ -71,20 +68,19 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			accessToken = getAccessToken(authHostname, accessToken, refreshToken, hostname);
 
 			Uri idURI = new Uri(Uri.UnescapeDataString(idURL));
-			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(idURI);
+			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(idURI);
 			request.Method = "GET";
 			WebHeaderCollection headers = new WebHeaderCollection();
 			headers.Add("Authorization", "Bearer " + accessToken);
 			request.Headers = headers;
 
-			using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+			using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
 			{
 				using (Stream stream = response.GetResponseStream())
 				{
 					StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 					String responseString = reader.ReadToEnd();
 					JObject jsonResponse = JObject.Parse(responseString);
-					TempLogger.Log("about to return from getUserName");
 
 					return new Tuple<string, string>(accessToken, jsonResponse["username"].Value<string>());
 				}
@@ -121,7 +117,6 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			}
 			catch (Exception e)
 			{
-				TempLogger.Log(e.Message);
 				return new Tuple<string, IDictionary<string, string>>(accessToken, new Dictionary<string, string>());
 			}
 		}
@@ -141,7 +136,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			string databaseId = "";
 			try
 			{
-				using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
 				{
 					using (Stream stream = response.GetResponseStream())
 					{
@@ -149,7 +144,6 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						String responseString = reader.ReadToEnd();
 						JObject jsonResponse = JObject.Parse(responseString);
 						IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
-						TempLogger.Log("folders have: " + folders.Count());
 						if (folders.Count() > 1)
 						{
 							throw new DataMisalignedException("Too many matches for folder: " + databaseName);
@@ -161,14 +155,14 @@ namespace SalesforceReportsConnector.SalesforceAPI
 
 				accessToken = getAccessToken(authHostname, accessToken, refreshToken, host);
 				hostUri = new Uri(host);
-				request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
+				request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
 					"https://eu1.salesforce.com/services/data/" + SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Report WHERE OwnerId = '{0}' ORDER BY Name", databaseId)));
 				request.Method = "GET";
 				headers = new WebHeaderCollection();
 				headers.Add("Authorization", "Bearer " + accessToken);
 				request.Headers = headers;
 
-				using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
 				{
 					using (Stream stream = response.GetResponseStream())
 					{
@@ -180,11 +174,9 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						return new Tuple<string, IEnumerable<string>>(accessToken, tableStringList);
 					}
 				}
-
 			}
 			catch (Exception e)
 			{
-				TempLogger.Log(e.Message);
 				return new Tuple<string, IEnumerable<string>>(accessToken, new List<string>());
 			}
 		}
