@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using QlikView.Qvx.QvxLibrary;
 using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
@@ -7,6 +9,8 @@ namespace SalesforceReportsConnector.QVX
 {
 	internal class QvxSalesforceReportsServer : QvxServer
 	{
+		public IDictionary<string, string> DatabaseDictionary { get; set; } 
+
 		public override QvxConnection CreateConnection()
 		{
 			return new QvxSalesforceReportsConnection();
@@ -46,7 +50,7 @@ namespace SalesforceReportsConnector.QVX
 			switch (method)
 			{
 				case "getDatabases":
-					response = getDatabases();
+					response = getDatabases(connection, host, authHost, access_token, refresh_token);
 					break;
 				case "getOwner":
 					response = new Info { qMessage = username };
@@ -91,14 +95,15 @@ namespace SalesforceReportsConnector.QVX
 			return ToJson(response);
 		}
 
-		public QvDataContractResponse getDatabases()
+		public QvDataContractResponse getDatabases(QvxConnection connection, string host, string authHost, string access_token, string refresh_token)
 		{
+			Tuple<string, IDictionary<string, string>> tuple = EndpointCalls.GetReportFoldersList(host, authHost, access_token, refresh_token);
+			connection.MParameters["access_token"] = tuple.Item1;
+			DatabaseDictionary = tuple.Item2;
+
 			return new QvDataContractDatabaseListResponse
 			{
-				qDatabases = new Database[]
-				{
-					new Database { qName = "Salesforce Reports" }
-				}
+				qDatabases = DatabaseDictionary.Keys.Select(name => new Database() {qName = name}).ToArray()
 			};
 		}
 

@@ -37,11 +37,7 @@ namespace SalesforceReportsConnector.QVX
 			}
 
 			Tuple<string, IList<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token);
-			TempLogger.Log("got a tuple back");
-
 			this.MParameters["access_token"] = tuple.Item1;
-			TempLogger.Log("set that tuple tuple back");
-
 
 			foreach (string tableName in tuple.Item2)
 			{

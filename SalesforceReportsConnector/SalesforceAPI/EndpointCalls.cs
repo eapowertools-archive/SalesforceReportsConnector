@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using Newtonsoft.Json.Linq;
@@ -85,6 +86,41 @@ namespace SalesforceReportsConnector.SalesforceAPI
 
 					return new Tuple<string, string>(accessToken, jsonResponse["username"].Value<string>());
 				}
+			}
+		}
+
+		public static Tuple<string, IDictionary<string, string>> GetReportFoldersList(string host, string authHostname, string accessToken, string refreshToken)
+		{
+			accessToken = getAccessToken(authHostname, accessToken, refreshToken, host);
+			Uri hostUri = new Uri(host);
+
+			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
+				"https://eu1.salesforce.com/services/data/" + SALESFORCE_API_VERSION + "/query?q=SELECT Id,Name FROM Folder WHERE Type = 'Report' ORDER BY Name"));
+			request.Method = "GET";
+			WebHeaderCollection headers = new WebHeaderCollection();
+			headers.Add("Authorization", "Bearer " + accessToken);
+			request.Headers = headers;
+
+			try
+			{
+				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
+				{
+					using (Stream stream = response.GetResponseStream())
+					{
+						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+						String responseString = reader.ReadToEnd();
+						JObject jsonResponse = JObject.Parse(responseString);
+						IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
+						folders = folders.Where(x => !string.IsNullOrEmpty(x["Name"].Value<string>()) && x["Name"].Value<string>() != "*");
+						Dictionary<string, string> folderDictionary = folders.ToDictionary(x => x["Name"].Value<string>(), y => y["Id"].Value<string>());
+						return new Tuple<string, IDictionary<string, string>>(accessToken, folderDictionary);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				TempLogger.Log(e.Message);
+				return new Tuple<string, IDictionary<string, string>>(accessToken, new Dictionary<string, string>());
 			}
 		}
 
