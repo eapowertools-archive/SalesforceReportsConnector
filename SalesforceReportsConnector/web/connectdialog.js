@@ -33,9 +33,12 @@
                         $scope.URL = "https://login.salesforce.com/";
                     }
 
+                    console.log("pre JSON request!!");
+
+
                     input.serverside.sendJsonRequest("API-getSalesforcePath", $scope.URL).then(function (info) {
                         var url = info.qMessage;
-
+                        console.log( "ready to show!!" );
                         salesforcelogindialog.show($sce, url).then(function (result) {
                             $scope.destroyComponent();
                             input.serverside.sendJsonRequest("API-getUsername", $scope.URL, result['access_token'], result['refresh_token'], result['instance_url'], result['id']).then(function (info) {

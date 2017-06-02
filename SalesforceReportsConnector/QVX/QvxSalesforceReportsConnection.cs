@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using QlikView.Qvx.QvxLibrary;
+using SalesforceReportsConnector.Logger;
+using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.QVX
 {
@@ -8,25 +11,48 @@ namespace SalesforceReportsConnector.QVX
 	{
 		public override void Init()
 		{
-			QvxLog.SetLogLevels(true, true);
+			MTables = GetTables();
+		}
 
-			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "Init()");
+		private List<QvxTable> GetTables()
+		{
+			List<QvxTable> tables = new List<QvxTable>();
 
-			var eventLogFields = new QvxField[]
+			string host, authHost, access_token, refresh_token, folder_name;
+			try
 			{
-				new QvxField("Title", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-				new QvxField("Message", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
-			};
-
-			MTables = new List<QvxTable>
+				this.MParameters.TryGetValue("host", out host);
+				this.MParameters.TryGetValue("authHost", out authHost);
+				this.MParameters.TryGetValue("access_token", out access_token);
+				this.MParameters.TryGetValue("refresh_token", out refresh_token);
+				this.MParameters.TryGetValue("folder_name", out folder_name);
+			}
+			catch (Exception e)
 			{
-				new QvxTable
+				return tables;
+			}
+
+			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(authHost) || string.IsNullOrEmpty(access_token) || string.IsNullOrEmpty(refresh_token) || string.IsNullOrEmpty(folder_name))
+			{
+				return tables;
+			}
+
+			Tuple<string, IEnumerable<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token, folder_name);
+			this.MParameters["access_token"] = tuple.Item1;
+
+			foreach (string tableName in tuple.Item2)
+			{
+				TempLogger.Log("Table: " + tableName);
+
+				tables.Add(new QvxTable()
 				{
-					TableName = "DummyData",
-					GetRows = GetApplicationEvents,
-					Fields = eventLogFields
-				}
-			};
+					TableName = tableName,
+					Fields = new QvxField[] { },
+					GetRows = GetApplicationEvents
+				});
+			}
+
+			return tables;
 		}
 
 		private IEnumerable<QvxDataRow> GetApplicationEvents()
@@ -52,6 +78,7 @@ namespace SalesforceReportsConnector.QVX
              * In this example it is an escaped double quote that is
              * the quoteprefix/suffix
              */
+
 			query = Regex.Replace(query, "\\\"", "");
 
 			return base.ExtractQuery(query, qvxTables);

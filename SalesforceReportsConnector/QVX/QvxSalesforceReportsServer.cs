@@ -1,6 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using QlikView.Qvx.QvxLibrary;
-using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.QVX
@@ -22,7 +23,7 @@ namespace SalesforceReportsConnector.QVX
 		{
 			if (method.StartsWith("API-"))
 			{
-				return HandleAPIRequests(method, userParameters);
+				return HandleAPIRequests(method, userParameters, connection);
 			}
 			else
 			{
@@ -32,29 +33,29 @@ namespace SalesforceReportsConnector.QVX
 
 		private string HandleRequest(string method, string[] userParameters, QvxConnection connection)
 		{
-
 			QvDataContractResponse response;
 
-			string provider, host, username, access_token, refresh_token;
+			string provider, host, authHost, username, access_token, refresh_token;
 			connection.MParameters.TryGetValue("provider", out provider); // Set to the name of the connector by QlikView Engine
 			connection.MParameters.TryGetValue("userid", out username); // Set when creating new connection or from inside the QlikView Management Console (QMC)
-			connection.MParameters.TryGetValue("host", out host); // Defined when calling createNewConnection in connectdialog.js
+			connection.MParameters.TryGetValue("host", out host);
+			connection.MParameters.TryGetValue("authHost", out authHost);
 			connection.MParameters.TryGetValue("access_token", out access_token);
 			connection.MParameters.TryGetValue("refresh_token", out refresh_token);
 
 			switch (method)
 			{
 				case "getDatabases":
-					response = getDatabases();
+					response = getDatabases(connection, host, authHost, access_token, refresh_token);
 					break;
 				case "getOwner":
 					response = new Info { qMessage = username };
 					break;
 				case "getTables":
-					response = getTables(username, connection, userParameters[0], userParameters[1]);
+					response = getTables(connection, host, authHost, access_token, refresh_token, userParameters[0]);
 					break;
 				case "getFields":
-					response = getFields(username, connection, userParameters[0], userParameters[1], userParameters[2]);
+					response = getFields(connection, userParameters[0]);
 					break;
 				default:
 					response = new Info { qMessage = "Unknown command" };
@@ -63,7 +64,7 @@ namespace SalesforceReportsConnector.QVX
 			return ToJson(response); // serializes response into JSON string		
 		}
 
-		private string HandleAPIRequests(string method, string[] userParameters)
+		private string HandleAPIRequests(string method, string[] userParameters, QvxConnection connection)
 		{
 			QvDataContractResponse response;
 
@@ -75,10 +76,12 @@ namespace SalesforceReportsConnector.QVX
 					response = new Info { qMessage = url };
 					break;
 				case "API-getUsername":
-					string username = EndpointCalls.getUsername(userParameters[0], userParameters[1], userParameters[2], userParameters[3], userParameters[4]);
+					Tuple<string, string> tuple = EndpointCalls.getUsername(userParameters[0], userParameters[1], userParameters[2], Uri.UnescapeDataString(userParameters[3]), userParameters[4]);
+					connection.MParameters["access_token"] = tuple.Item1;
+
 					response = new Info
 					{
-						qMessage = string.Format("{{\"username\": \"{0}\", \"host\": \"{1}\" }}", username, Uri.UnescapeDataString(userParameters[3]))
+						qMessage = string.Format("{{\"username\": \"{0}\", \"host\": \"{1}\" }}", tuple.Item2, Uri.UnescapeDataString(userParameters[3]))
 					};
 					break;
 				default:
@@ -88,26 +91,37 @@ namespace SalesforceReportsConnector.QVX
 			return ToJson(response);
 		}
 
-		public QvDataContractResponse getDatabases()
+		public QvDataContractResponse getDatabases(QvxConnection connection, string host, string authHost, string access_token, string refresh_token)
 		{
+			Tuple<string, IDictionary<string, string>> tuple = EndpointCalls.GetReportFoldersList(host, authHost, access_token, refresh_token);
+			connection.MParameters["access_token"] = tuple.Item1;
+
 			return new QvDataContractDatabaseListResponse
 			{
-				qDatabases = new Database[]
-				{
-					new Database { qName = "Salesforce Reports" }
-				}
+				qDatabases = tuple.Item2.Keys.Select(name => new Database() { qName = name }).ToArray()
 			};
 		}
 
-		public QvDataContractResponse getTables(string username, QvxConnection connection, string database, string owner)
+		public QvDataContractResponse getTables(QvxConnection connection, string host, string authHost, string access_token, string refresh_token, string folderName)
 		{
+			if (connection.MParameters.ContainsKey("folder_name"))
+			{
+				connection.MParameters["folder_name"] = folderName;
+			}
+			else
+			{
+				connection.MParameters.Add("folder_name", folderName);
+			}
+
+			connection.Init();
+
 			return new QvDataContractTableListResponse
 			{
 				qTables = connection.MTables
 			};
 		}
 
-		public QvDataContractResponse getFields(string username, QvxConnection connection, string database, string owner, string table)
+		public QvDataContractResponse getFields(QvxConnection connection, string table)
 		{
 			QvxTable currentTable = null;
 
