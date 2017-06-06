@@ -27,7 +27,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 				TempLogger.Log("refresh token: " + connectionParams[QvxSalesforceConnectionInfo.CONNECTION_REFRESH_TOKEN]);
 				TempLogger.Log("Auth hostname: " + connectionParams[QvxSalesforceConnectionInfo.CONNECTION_AUTHHOST]);
 
-				if (((HttpWebResponse) e.Response).StatusCode == HttpStatusCode.Unauthorized || ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.Forbidden)
+				if (((HttpWebResponse) e.Response).StatusCode == HttpStatusCode.Unauthorized || ((HttpWebResponse) e.Response).StatusCode == HttpStatusCode.Forbidden)
 				{
 					Uri authHostnameUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_AUTHHOST]);
 					string newTokenPath = string.Format("/services/oauth2/token?grant_type=refresh_token&client_id={0}&refresh_token={1}", QvxSalesforceConnectionInfo.CLIENT_ID, connectionParams[QvxSalesforceConnectionInfo.CONNECTION_REFRESH_TOKEN]);
@@ -57,7 +57,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 				}
 				else
 				{
-					TempLogger.Log("shit didn't break well: " + ((HttpWebResponse)e.Response).StatusCode);
+					TempLogger.Log("shit didn't break well: " + ((HttpWebResponse) e.Response).StatusCode);
 
 					throw new Exception("Invalid Web Response");
 				}
@@ -78,26 +78,19 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			connectionValues.Add(QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN, accessToken);
 			connectionValues.Add(QvxSalesforceConnectionInfo.CONNECTION_REFRESH_TOKEN, refreshToken);
 
-			TempLogger.Log("got my connection values");
 			return ValidateAccessTokenAndPerformRequest<string>(connection, connectionValues, (token) =>
 			{
-				TempLogger.Log("about to make my request to: " + idURL);
-				TempLogger.Log("with token: " + token);
-
 				Uri idURI = new Uri(idURL);
 				HttpWebRequest request = (HttpWebRequest) WebRequest.Create(idURI);
 				request.Method = "GET";
 				WebHeaderCollection headers = new WebHeaderCollection();
 				headers.Add("Authorization", "Bearer " + token);
 				request.Headers = headers;
-				TempLogger.Log("lets send it!");
 
 				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
 				{
 					using (Stream stream = response.GetResponseStream())
 					{
-						TempLogger.Log("got a reply!");
-
 						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 						String responseString = reader.ReadToEnd();
 						JObject jsonResponse = JObject.Parse(responseString);
@@ -108,39 +101,45 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			});
 		}
 
-		public static IDictionary<string, string> GetReportFoldersList(QvxConnection connection)
+		public static IEnumerable<string> GetReportFoldersList(QvxConnection connection)
 		{
 			IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
 
-			return ValidateAccessTokenAndPerformRequest<Dictionary<string, string>>(connection, connectionParams, (accessToken) =>
+			return ValidateAccessTokenAndPerformRequest<IEnumerable<string>>(connection, connectionParams, (accessToken) =>
 			{
+				TempLogger.Log("trying to get my reports folder list");
 				Uri hostUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_HOST]);
 				HttpWebRequest request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
-					"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + "/query?q=SELECT Id,Name FROM Folder WHERE Type = 'Report' ORDER BY Name"));
+					"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + "/query?q=SELECT Name FROM Folder WHERE Type = 'Report' ORDER BY Name"));
 				request.Method = "GET";
 				WebHeaderCollection headers = new WebHeaderCollection();
 				headers.Add("Authorization", "Bearer " + accessToken);
 				request.Headers = headers;
 
-				try
+				TempLogger.Log("ready tp send reqports request to: ");
+				TempLogger.Log(request.Address.AbsoluteUri);
+
+
+				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
 				{
-					using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
+					using (Stream stream = response.GetResponseStream())
 					{
-						using (Stream stream = response.GetResponseStream())
+						try
 						{
+							TempLogger.Log("got response! ");
+
 							StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 							String responseString = reader.ReadToEnd();
 							JObject jsonResponse = JObject.Parse(responseString);
 							IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
 							folders = folders.Where(x => !string.IsNullOrEmpty(x["Name"].Value<string>()) && x["Name"].Value<string>() != "*");
-							Dictionary<string, string> folderDictionary = folders.ToDictionary(x => x["Name"].Value<string>(), y => y["Id"].Value<string>());
-							return folderDictionary;
+							return folders.Select(f => f["Name"].Value<string>());
+						}
+						catch (Exception e)
+						{
+							return new List<string>();
 						}
 					}
-				}
-				catch (Exception e)
-				{
-					return new Dictionary<string, string>();
 				}
 			});
 		}
@@ -161,11 +160,12 @@ namespace SalesforceReportsConnector.SalesforceAPI
 				request.Headers = headers;
 
 				string databaseId = "";
-				try
+
+				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
 				{
-					using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
+					using (Stream stream = response.GetResponseStream())
 					{
-						using (Stream stream = response.GetResponseStream())
+						try
 						{
 							StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 							String responseString = reader.ReadToEnd();
@@ -178,21 +178,28 @@ namespace SalesforceReportsConnector.SalesforceAPI
 							JObject firstFolder = folders.First();
 							databaseId = firstFolder["Id"].Value<string>();
 						}
-					}
-
-
-					return ValidateAccessTokenAndPerformRequest<IEnumerable<string>>(connection, connectionParams, (newAccessToken) =>
-					{
-						request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
-							"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Report WHERE OwnerId = '{0}' ORDER BY Name", databaseId)));
-						request.Method = "GET";
-						headers = new WebHeaderCollection();
-						headers.Add("Authorization", "Bearer " + newAccessToken);
-						request.Headers = headers;
-
-						using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
+						catch (Exception e)
 						{
-							using (Stream stream = response.GetResponseStream())
+							return new List<string>();
+						}
+					}
+				}
+
+
+				return ValidateAccessTokenAndPerformRequest<IEnumerable<string>>(connection, connectionParams, (newAccessToken) =>
+				{
+					request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
+						"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Report WHERE OwnerId = '{0}' ORDER BY Name", databaseId)));
+					request.Method = "GET";
+					headers = new WebHeaderCollection();
+					headers.Add("Authorization", "Bearer " + newAccessToken);
+					request.Headers = headers;
+
+					using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
+					{
+						using (Stream stream = response.GetResponseStream())
+						{
+							try
 							{
 								StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 								String responseString = reader.ReadToEnd();
@@ -201,15 +208,14 @@ namespace SalesforceReportsConnector.SalesforceAPI
 								IEnumerable<string> tableStringList = tables.Select(t => t["Name"].Value<string>());
 								return tableStringList;
 							}
+							catch (Exception e)
+							{
+								return new List<string>();
+							}
 						}
-					});
-				}
-				catch (Exception e)
-				{
-					return new List<string>();
-				}
+					}
+				});
 			});
-
 		}
 
 		// Helper Functions

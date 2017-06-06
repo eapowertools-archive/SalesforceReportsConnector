@@ -112,11 +112,11 @@ namespace SalesforceReportsConnector.QVX
 
 		public QvDataContractResponse getDatabases(QvxConnection connection)
 		{
-			IDictionary<string, string> databases = EndpointCalls.GetReportFoldersList(connection);
+			IEnumerable<string> databases = EndpointCalls.GetReportFoldersList(connection);
 
 			return new QvDataContractDatabaseListResponse
 			{
-				qDatabases = databases.Keys.Select(name => new Database() { qName = name }).ToArray()
+				qDatabases = databases.Select(name => new Database() { qName = name }).ToArray()
 			};
 		}
 
