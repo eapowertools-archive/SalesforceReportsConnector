@@ -37,22 +37,33 @@ namespace SalesforceReportsConnector.QVX
 				return tables;
 			}
 
-			Tuple<string, IEnumerable<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token, folder_name);
-			this.MParameters["access_token"] = tuple.Item1;
+			IEnumerable<string> tableNames = EndpointCalls.GetTableNameList(this, folder_name);
 
-			foreach (string tableName in tuple.Item2)
+			foreach (string tableName in tableNames)
 			{
 				TempLogger.Log("Table: " + tableName);
 
-				tables.Add(new QvxTable()
+				tables.Add(item: new QvxTable()
 				{
 					TableName = tableName,
-					Fields = new QvxField[] { },
+					Fields = GetTableFields(host, authHost, access_token, refresh_token, tableName),
 					GetRows = GetApplicationEvents
 				});
 			}
 
 			return tables;
+		}
+
+		private QvxField[] GetTableFields(string host, string authHost, string access_token, string refresh_token, string tableName)
+		{
+//			Tuple<string, IEnumerable<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token, folder_name);
+//			this.MParameters["access_token"] = tuple.Item1;
+
+			return new QvxField[]
+			{
+				new QvxField("Category", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
+
+			};
 		}
 
 		private IEnumerable<QvxDataRow> GetApplicationEvents()
