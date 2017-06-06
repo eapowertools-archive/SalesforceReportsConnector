@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using QlikView.Qvx.QvxLibrary;
-using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.QVX
@@ -78,8 +77,6 @@ namespace SalesforceReportsConnector.QVX
 					response = new Info { qMessage = url };
 					break;
 				case "API-BuildConnectionString":
-					TempLogger.Log("connection string go!");
-
 					string connectionString = String.Format("{0}={1};{2}={3};{4}={5};{6}={7};",
 						QvxSalesforceConnectionInfo.CONNECTION_HOST,
 						userParameters[0],
@@ -90,14 +87,9 @@ namespace SalesforceReportsConnector.QVX
 						QvxSalesforceConnectionInfo.CONNECTION_REFRESH_TOKEN,
 						userParameters[3]);
 					response = new Info { qMessage = connectionString };
-					TempLogger.Log("ready to create a connection string! " + connectionString);
 					break;
 				case "API-getUsername":
-					TempLogger.Log("lets get a username.");
-
 					string username = EndpointCalls.GetUsername(connection, userParameters[0], userParameters[1], userParameters[2], Uri.UnescapeDataString(userParameters[3]), Uri.UnescapeDataString(userParameters[4]));
-					TempLogger.Log("got username: " + username);
-
 					response = new Info
 					{
 						qMessage = string.Format("{{\"username\": \"{0}\", \"host\": \"{1}\" }}", username, Uri.UnescapeDataString(userParameters[3]))

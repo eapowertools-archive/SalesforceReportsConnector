@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using QlikView.Qvx.QvxLibrary;
-using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.QVX
@@ -41,8 +40,6 @@ namespace SalesforceReportsConnector.QVX
 
 			foreach (string tableName in tableNames)
 			{
-				TempLogger.Log("Table: " + tableName);
-
 				tables.Add(item: new QvxTable()
 				{
 					TableName = tableName,
@@ -62,7 +59,6 @@ namespace SalesforceReportsConnector.QVX
 			return new QvxField[]
 			{
 				new QvxField("Category", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-
 			};
 		}
 

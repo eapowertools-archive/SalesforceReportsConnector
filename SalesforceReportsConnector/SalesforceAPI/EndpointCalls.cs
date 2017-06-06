@@ -6,7 +6,6 @@ using System.Net;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using QlikView.Qvx.QvxLibrary;
-using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.QVX;
 
 namespace SalesforceReportsConnector.SalesforceAPI
@@ -17,25 +16,16 @@ namespace SalesforceReportsConnector.SalesforceAPI
 		{
 			try
 			{
-				TempLogger.Log("Using this token to call: " + connectionParams[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN]);
-
 				return endpointCall(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN]);
 			}
 			catch (WebException e)
 			{
-				TempLogger.Log("Getting a new token:");
-				TempLogger.Log("refresh token: " + connectionParams[QvxSalesforceConnectionInfo.CONNECTION_REFRESH_TOKEN]);
-				TempLogger.Log("Auth hostname: " + connectionParams[QvxSalesforceConnectionInfo.CONNECTION_AUTHHOST]);
-
 				if (((HttpWebResponse) e.Response).StatusCode == HttpStatusCode.Unauthorized || ((HttpWebResponse) e.Response).StatusCode == HttpStatusCode.Forbidden)
 				{
 					Uri authHostnameUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_AUTHHOST]);
 					string newTokenPath = string.Format("/services/oauth2/token?grant_type=refresh_token&client_id={0}&refresh_token={1}", QvxSalesforceConnectionInfo.CLIENT_ID, connectionParams[QvxSalesforceConnectionInfo.CONNECTION_REFRESH_TOKEN]);
 					HttpWebRequest newTokenRequest = (HttpWebRequest) HttpWebRequest.Create(new Uri(authHostnameUri, newTokenPath));
 					newTokenRequest.Method = "POST";
-
-					TempLogger.Log("sending request for new token!");
-
 
 					string newAccessToken = connectionParams[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN];
 					using (HttpWebResponse newTokenResponse = (HttpWebResponse) newTokenRequest.GetResponse())
@@ -49,23 +39,15 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						}
 					}
 					connection.MParameters[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN] = newAccessToken;
-
-					TempLogger.Log("so far so good. new token: " + newAccessToken);
-
-
 					return endpointCall(newAccessToken);
 				}
 				else
 				{
-					TempLogger.Log("shit didn't break well: " + ((HttpWebResponse) e.Response).StatusCode);
-
 					throw new Exception("Invalid Web Response");
 				}
 			}
 			catch (Exception e)
 			{
-				TempLogger.Log("uh oh");
-
 				return default(T);
 			}
 		}
@@ -107,7 +89,6 @@ namespace SalesforceReportsConnector.SalesforceAPI
 
 			return ValidateAccessTokenAndPerformRequest<IEnumerable<string>>(connection, connectionParams, (accessToken) =>
 			{
-				TempLogger.Log("trying to get my reports folder list");
 				Uri hostUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_HOST]);
 				HttpWebRequest request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
 					"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + "/query?q=SELECT Name FROM Folder WHERE Type = 'Report' ORDER BY Name"));
@@ -116,18 +97,12 @@ namespace SalesforceReportsConnector.SalesforceAPI
 				headers.Add("Authorization", "Bearer " + accessToken);
 				request.Headers = headers;
 
-				TempLogger.Log("ready tp send reqports request to: ");
-				TempLogger.Log(request.Address.AbsoluteUri);
-
-
 				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
 				{
 					using (Stream stream = response.GetResponseStream())
 					{
 						try
 						{
-							TempLogger.Log("got response! ");
-
 							StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 							String responseString = reader.ReadToEnd();
 							JObject jsonResponse = JObject.Parse(responseString);
