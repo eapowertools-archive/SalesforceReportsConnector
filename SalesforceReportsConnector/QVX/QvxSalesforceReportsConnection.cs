@@ -49,10 +49,15 @@ namespace SalesforceReportsConnector.QVX
 
 			tables.AddRange(tableDictionary.Select(table =>
 			{
-				QvxTable.GetRowsHandler handler = () => GetData(table.Value);
+				QvxField[] fields = GetFields(table.Key);
+				QvxTable.GetRowsHandler handler = () =>
+				{
+					TempLogger.Log("lets go handler.");
+					return GetData(fields, table.Key);
+				};
 				return new QvxTable()
 				{
-					TableName = table.Value, Fields = GetFields(table.Key), GetRows = handler
+					TableName = table.Value, Fields = fields, GetRows = handler
 				};
 			}));
 
@@ -63,44 +68,91 @@ namespace SalesforceReportsConnector.QVX
 		{
 			return new QvxField[]
 			{
-				new QvxField("Title", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-				new QvxField("Message", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
+				new QvxField("Title" + tableID, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
+				new QvxField("Message" + tableID, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
 			};
 		}
 
-		private IEnumerable<QvxDataRow> GetData(string tableName)
+		private IEnumerable<QvxDataRow> GetData(QvxField[] fields, string tableKey)
 		{
+			TempLogger.Log("Ready to get some data for: " + tableKey);
+
 			for (int i = 0; i < 20; i++)
 			{
 				var row = new QvxDataRow();
-				var table = FindTable(tableName, this.MTables);
-				row[table.Fields[0]] = "SomeTitle " + i;
-				row[table.Fields[1]] = i + " - This is my message. - " + i;
+				//var table = FindTable(tableKey, this.MTables);
+				row[fields[0]] = "SomeTitle " + i;
+				row[fields[1]] = i + " - This is my message. - " + i;
 				yield return row;
 			}
 		}
 
 		public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
 		{
+			QvxDataTable returnTable = null;
+
 			IList<ParseError> errors = null;
 			var parser = new TSql100Parser(true);
 			TextReader reader = new StringReader(query);
 			TSqlScript script = parser.Parse(reader, out errors) as TSqlScript;
 
 			IList<TSqlParserToken> tokens = script.Batches[0].Statements[0].ScriptTokenStream;
+
+			// get record folder
 			TSqlParserToken fromToken = tokens.First(t => t.TokenType == TSqlTokenType.From);
 			int indexOfFromToken = tokens.IndexOf(fromToken);
 			IEnumerable<TSqlParserToken> tableTokens = tokens.Skip(indexOfFromToken);
-			var identifier = tableTokens.First(t => t.TokenType == TSqlTokenType.Identifier || t.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier);
+			TSqlParserToken identifier = tableTokens.First(t => t.TokenType == TSqlTokenType.Identifier || t.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier);
 			string folderName = identifier.Text;
 			if (identifier.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier)
 			{
 				folderName = folderName.Substring(1, folderName.Length - 2);
 			}
-			TempLogger.Log("table name: " + folderName);
+			TempLogger.Log("folder name: " + folderName);
 
-			this.MParameters.Add("folder_name", folderName);
-			this.Init();
+			// get report name
+			tableTokens = tokens.Skip(tokens.IndexOf(identifier));
+			TSqlParserToken reportSeparator = tableTokens.First(t => t.TokenType == TSqlTokenType.Dot);
+			tableTokens = tokens.Skip(tokens.IndexOf(reportSeparator));
+			TSqlParserToken reportNameToken = tableTokens.First(t => t.TokenType == TSqlTokenType.Identifier || t.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier);
+			string reportName = reportNameToken.Text;
+			TempLogger.Log("report name: " + reportName);
+
+			if (reportNameToken.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier)
+			{
+				reportName = reportName.Substring(1, reportName.Length - 2);
+			}
+			TempLogger.Log("report name: " + reportName);
+
+			if (this.MParameters.ContainsKey("folder_name"))
+			{
+				if (folderName == this.MParameters["folder_name"] && this.MTables == null)
+				{
+					this.Init();
+				}
+				else if (folderName != this.MParameters["folder_name"])
+				{
+					this.MParameters["folder_name"] = folderName;
+					this.Init();
+				}
+			}
+			else
+			{
+				this.MParameters.Add("folder_name", folderName);
+				this.Init();
+			}
+
+			try
+			{
+				var newTable = this.FindTable(reportName, this.MTables);
+				TempLogger.Log("Got a report." + this.MTables.Count);
+				TempLogger.Log(newTable.TableName);
+				returnTable = new QvxDataTable(this.FindTable(reportName, this.MTables));
+			}
+			catch (Exception e)
+			{
+				TempLogger.Log("Exception: " + e.Message);
+			}
 
 
 			/* Make sure to remove your quotesuffix, quoteprefix, 
@@ -115,9 +167,7 @@ namespace SalesforceReportsConnector.QVX
 
 			TempLogger.Log("------------------\ndone with query");
 
-			query = Regex.Replace(query, "\\\"", "");
-
-			return base.ExtractQuery(query, this.MTables);
+			return returnTable;
 		}
 	}
 }
