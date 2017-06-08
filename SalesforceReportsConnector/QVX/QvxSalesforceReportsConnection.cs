@@ -147,25 +147,12 @@ namespace SalesforceReportsConnector.QVX
 				var newTable = this.FindTable(reportName, this.MTables);
 				TempLogger.Log("Got a report." + this.MTables.Count);
 				TempLogger.Log(newTable.TableName);
-				returnTable = new QvxDataTable(this.FindTable(reportName, this.MTables));
+				returnTable = new QvxDataTable(newTable);
 			}
 			catch (Exception e)
 			{
 				TempLogger.Log("Exception: " + e.Message);
 			}
-
-
-			/* Make sure to remove your quotesuffix, quoteprefix, 
-             * quotesuffixfordoublequotes, quoteprefixfordoublequotes
-             * as defined in selectdialog.js somewhere around here.
-             * 
-             * In this example it is an escaped double quote that is
-             * the quoteprefix/suffix
-             */
-
-			//Entity
-
-			TempLogger.Log("------------------\ndone with query");
 
 			return returnTable;
 		}
