@@ -1,29 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Data.Schema.ScriptDom;
+using Microsoft.Data.Schema.ScriptDom.Sql;
 using QlikView.Qvx.QvxLibrary;
+using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.QVX
 {
 	internal class QvxSalesforceReportsConnection : QvxConnection
 	{
+		public Guid myGuid = Guid.NewGuid();
+
 		public override void Init()
 		{
-			MTables = GetTables();
+//			foreach (KeyValuePair<string, string> mParameter in MParameters)
+//			{
+//				TempLogger.Log("param: " + mParameter.Key + "|" + mParameter.Value);
+//			}
+			this.MTables = GetTables();
 		}
 
-		private List<QvxTable> GetTables()
+		public List<QvxTable> GetTables()
 		{
 			List<QvxTable> tables = new List<QvxTable>();
 
-			string host, authHost, access_token, refresh_token, folder_name;
+			string folder_name;
 			try
 			{
-				this.MParameters.TryGetValue("host", out host);
-				this.MParameters.TryGetValue("authHost", out authHost);
-				this.MParameters.TryGetValue("access_token", out access_token);
-				this.MParameters.TryGetValue("refresh_token", out refresh_token);
 				this.MParameters.TryGetValue("folder_name", out folder_name);
 			}
 			catch (Exception e)
@@ -31,45 +38,42 @@ namespace SalesforceReportsConnector.QVX
 				return tables;
 			}
 
-			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(authHost) || string.IsNullOrEmpty(access_token) || string.IsNullOrEmpty(refresh_token) || string.IsNullOrEmpty(folder_name))
+			if (string.IsNullOrEmpty(folder_name))
 			{
 				return tables;
 			}
 
-			IEnumerable<string> tableNames = EndpointCalls.GetTableNameList(this, folder_name);
+			IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(this, folder_name);
 
-			foreach (string tableName in tableNames)
+			TempLogger.Log("Dictionary has: " + tableDictionary.Count);
+
+			tables.AddRange(tableDictionary.Select(table =>
 			{
-				tables.Add(item: new QvxTable()
+				QvxTable.GetRowsHandler handler = () => GetData(table.Value);
+				return new QvxTable()
 				{
-					TableName = tableName,
-					Fields = GetTableFields(host, authHost, access_token, refresh_token, tableName),
-					GetRows = GetApplicationEvents
-				});
-			}
+					TableName = table.Value, Fields = GetFields(table.Key), GetRows = handler
+				};
+			}));
 
 			return tables;
 		}
 
-		private QvxField[] GetTableFields(string host, string authHost, string access_token, string refresh_token, string tableName)
+		private QvxField[] GetFields(string tableID)
 		{
-//			Tuple<string, IEnumerable<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token, folder_name);
-//			this.MParameters["access_token"] = tuple.Item1;
-
 			return new QvxField[]
 			{
-				new QvxField("Category", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
+				new QvxField("Title", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
+				new QvxField("Message", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
 			};
 		}
 
-		private IEnumerable<QvxDataRow> GetApplicationEvents()
+		private IEnumerable<QvxDataRow> GetData(string tableName)
 		{
-			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "GetApplicationEvents()");
-
 			for (int i = 0; i < 20; i++)
 			{
 				var row = new QvxDataRow();
-				var table = FindTable("DummyData", MTables);
+				var table = FindTable(tableName, this.MTables);
 				row[table.Fields[0]] = "SomeTitle " + i;
 				row[table.Fields[1]] = i + " - This is my message. - " + i;
 				yield return row;
@@ -78,6 +82,27 @@ namespace SalesforceReportsConnector.QVX
 
 		public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
 		{
+			IList<ParseError> errors = null;
+			var parser = new TSql100Parser(true);
+			TextReader reader = new StringReader(query);
+			TSqlScript script = parser.Parse(reader, out errors) as TSqlScript;
+
+			IList<TSqlParserToken> tokens = script.Batches[0].Statements[0].ScriptTokenStream;
+			TSqlParserToken fromToken = tokens.First(t => t.TokenType == TSqlTokenType.From);
+			int indexOfFromToken = tokens.IndexOf(fromToken);
+			IEnumerable<TSqlParserToken> tableTokens = tokens.Skip(indexOfFromToken);
+			var identifier = tableTokens.First(t => t.TokenType == TSqlTokenType.Identifier || t.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier);
+			string folderName = identifier.Text;
+			if (identifier.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier)
+			{
+				folderName = folderName.Substring(1, folderName.Length - 2);
+			}
+			TempLogger.Log("table name: " + folderName);
+
+			this.MParameters.Add("folder_name", folderName);
+			this.Init();
+
+
 			/* Make sure to remove your quotesuffix, quoteprefix, 
              * quotesuffixfordoublequotes, quoteprefixfordoublequotes
              * as defined in selectdialog.js somewhere around here.
@@ -86,9 +111,13 @@ namespace SalesforceReportsConnector.QVX
              * the quoteprefix/suffix
              */
 
+			//Entity
+
+			TempLogger.Log("------------------\ndone with query");
+
 			query = Regex.Replace(query, "\\\"", "");
 
-			return base.ExtractQuery(query, qvxTables);
+			return base.ExtractQuery(query, this.MTables);
 		}
 	}
 }

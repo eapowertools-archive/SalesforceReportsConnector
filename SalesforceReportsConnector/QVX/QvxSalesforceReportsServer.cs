@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using QlikView.Qvx.QvxLibrary;
+using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.QVX
@@ -35,13 +36,6 @@ namespace SalesforceReportsConnector.QVX
 		{
 			QvDataContractResponse response;
 
-			string provider, host, authHost, access_token, refresh_token;
-			connection.MParameters.TryGetValue("provider", out provider); // Set to the name of the connector by QlikView Engine
-			connection.MParameters.TryGetValue("host", out host);
-			connection.MParameters.TryGetValue("authHost", out authHost);
-			connection.MParameters.TryGetValue("access_token", out access_token);
-			connection.MParameters.TryGetValue("refresh_token", out refresh_token);
-
 			switch (method)
 			{
 				case "getDatabases":
@@ -56,7 +50,7 @@ namespace SalesforceReportsConnector.QVX
 					response = getTables(connection, userParameters[0]);
 					break;
 				case "getFields":
-					response = getFields(connection, userParameters[0]);
+					response = getFields(connection, userParameters[0], userParameters[1]);
 					break;
 				default:
 					response = new Info { qMessage = "Unknown command" };
@@ -124,6 +118,7 @@ namespace SalesforceReportsConnector.QVX
 			}
 
 			connection.Init();
+			TempLogger.Log("Tables - Connection GUID: " + ((QvxSalesforceReportsConnection)connection).myGuid.ToString());
 
 			return new QvDataContractTableListResponse
 			{
@@ -131,14 +126,27 @@ namespace SalesforceReportsConnector.QVX
 			};
 		}
 
-		public QvDataContractResponse getFields(QvxConnection connection, string table)
+		public QvDataContractResponse getFields(QvxConnection connection, string folderName, string table)
 		{
-			QvxTable currentTable = null;
+			if (connection.MParameters.ContainsKey("folder_name"))
+			{
+				connection.MParameters["folder_name"] = folderName;
+			}
+			else
+			{
+				connection.MParameters.Add("folder_name", folderName);
+			}
+			connection.Init();
+			TempLogger.Log("Calling init: " + folderName);
+			QvxTable currentTable = connection.FindTable(table, connection.MTables);
+			TempLogger.Log("Tables: " + connection.MTables.Count);
+			TempLogger.Log("Is it null? " + (currentTable == null));
 
 			return new QvDataContractFieldListResponse
 			{
 				qFields = (currentTable != null) ? currentTable.Fields : new QvxField[0]
 			};
+		
 		}
 	}
 }

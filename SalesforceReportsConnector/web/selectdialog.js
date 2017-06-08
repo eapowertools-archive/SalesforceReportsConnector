@@ -4,7 +4,7 @@
         var eventlogDialogContentProvider = {
             getConnectionInfo: function () {
                 return qvangular.promise({
-                    dbusage: false,
+                    dbusage: true,
                     ownerusage: false,
                     dbseparator: '.',
                     ownerseparator: '.',
@@ -31,7 +31,7 @@
                 });
             },
             getFields: function (qDatabaseName, qOwnerName, qTableName) {
-                return serverside.sendJsonRequest("getFields", qTableName).then(function (response) {
+                return serverside.sendJsonRequest("getFields", qDatabaseName, qTableName).then(function (response) {
                     return response.qFields;
                 });
             },

@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using QlikView.Qvx.QvxLibrary;
+using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.QVX;
 
 namespace SalesforceReportsConnector.SalesforceAPI
@@ -86,6 +87,10 @@ namespace SalesforceReportsConnector.SalesforceAPI
 		public static IEnumerable<string> GetReportFoldersList(QvxConnection connection)
 		{
 			IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
+			if (connectionParams == null)
+			{
+				return new List<string>();
+			}
 
 			return ValidateAccessTokenAndPerformRequest<IEnumerable<string>>(connection, connectionParams, (accessToken) =>
 			{
@@ -101,32 +106,28 @@ namespace SalesforceReportsConnector.SalesforceAPI
 				{
 					using (Stream stream = response.GetResponseStream())
 					{
-						try
-						{
-							StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-							String responseString = reader.ReadToEnd();
-							JObject jsonResponse = JObject.Parse(responseString);
-							IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
-							folders = folders.Where(x => !string.IsNullOrEmpty(x["Name"].Value<string>()) && x["Name"].Value<string>() != "*");
-							return folders.Select(f => f["Name"].Value<string>());
-						}
-						catch (Exception e)
-						{
-							return new List<string>();
-						}
+						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+						String responseString = reader.ReadToEnd();
+						JObject jsonResponse = JObject.Parse(responseString);
+						IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
+						folders = folders.Where(x => !string.IsNullOrEmpty(x["Name"].Value<string>()) && x["Name"].Value<string>() != "*");
+						return folders.Select(f => f["Name"].Value<string>());
 					}
 				}
 			});
 		}
 
-		public static IEnumerable<string> GetTableNameList(QvxConnection connection, string databaseName)
+		public static IDictionary<string, string> GetTableNameList(QvxConnection connection, string databaseName)
 		{
 			IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
+			if (connectionParams == null)
+			{
+				return new Dictionary<string, string>();
+			}
 
-			return ValidateAccessTokenAndPerformRequest<IEnumerable<string>>(connection, connectionParams, (accessToken) =>
+			return ValidateAccessTokenAndPerformRequest<IDictionary<string, string>>(connection, connectionParams, (accessToken) =>
 			{
 				Uri hostUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_HOST]);
-
 				HttpWebRequest request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
 					"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Folder WHERE Type = 'Report' AND Name = '{0}' ORDER BY Name", databaseName)));
 				request.Method = "GET";
@@ -135,33 +136,24 @@ namespace SalesforceReportsConnector.SalesforceAPI
 				request.Headers = headers;
 
 				string databaseId = "";
-
 				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
 				{
 					using (Stream stream = response.GetResponseStream())
 					{
-						try
+						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+						String responseString = reader.ReadToEnd();
+						JObject jsonResponse = JObject.Parse(responseString);
+						IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
+						if (folders.Count() > 1)
 						{
-							StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-							String responseString = reader.ReadToEnd();
-							JObject jsonResponse = JObject.Parse(responseString);
-							IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
-							if (folders.Count() > 1)
-							{
-								throw new DataMisalignedException("Too many matches for folder: " + databaseName);
-							}
-							JObject firstFolder = folders.First();
-							databaseId = firstFolder["Id"].Value<string>();
+							throw new DataMisalignedException("Too many matches for folder: " + databaseName);
 						}
-						catch (Exception e)
-						{
-							return new List<string>();
-						}
+						JObject firstFolder = folders.First();
+						databaseId = firstFolder["Id"].Value<string>();
 					}
 				}
 
-
-				return ValidateAccessTokenAndPerformRequest<IEnumerable<string>>(connection, connectionParams, (newAccessToken) =>
+				return ValidateAccessTokenAndPerformRequest<IDictionary<string, string>>(connection, connectionParams, (newAccessToken) =>
 				{
 					request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
 						"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Report WHERE OwnerId = '{0}' ORDER BY Name", databaseId)));
@@ -174,19 +166,12 @@ namespace SalesforceReportsConnector.SalesforceAPI
 					{
 						using (Stream stream = response.GetResponseStream())
 						{
-							try
-							{
-								StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-								String responseString = reader.ReadToEnd();
-								JObject jsonResponse = JObject.Parse(responseString);
-								IEnumerable<JObject> tables = jsonResponse["records"].Values<JObject>();
-								IEnumerable<string> tableStringList = tables.Select(t => t["Name"].Value<string>());
-								return tableStringList;
-							}
-							catch (Exception e)
-							{
-								return new List<string>();
-							}
+							StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+							String responseString = reader.ReadToEnd();
+							JObject jsonResponse = JObject.Parse(responseString);
+							IEnumerable<JObject> tables = jsonResponse["records"].Values<JObject>();
+							IDictionary<string, string> tableIdDictionary = tables.ToDictionary(r => r["Id"].Value<string>(), r => r["Name"].Value<string>());
+							return tableIdDictionary;
 						}
 					}
 				});
@@ -197,22 +182,20 @@ namespace SalesforceReportsConnector.SalesforceAPI
 
 		public static Dictionary<string, string> GetParamsFromConnection(QvxConnection connection)
 		{
-			string provider, host, authHost, username, access_token, refresh_token;
+			string host, authHost, username, access_token, refresh_token;
 
-			connection.MParameters.TryGetValue(QvxSalesforceConnectionInfo.CONNECTION_PROVIDER, out provider); // Set to the name of the connector by QlikView Engine
 			connection.MParameters.TryGetValue(QvxSalesforceConnectionInfo.CONNECTION_USERID, out username); // Set when creating new connection or from inside the QlikView Management Console (QMC)
 			connection.MParameters.TryGetValue(QvxSalesforceConnectionInfo.CONNECTION_HOST, out host);
 			connection.MParameters.TryGetValue(QvxSalesforceConnectionInfo.CONNECTION_AUTHHOST, out authHost);
 			connection.MParameters.TryGetValue(QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN, out access_token);
 			connection.MParameters.TryGetValue(QvxSalesforceConnectionInfo.CONNECTION_REFRESH_TOKEN, out refresh_token);
 
-			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(authHost) || string.IsNullOrEmpty(access_token) || string.IsNullOrEmpty(refresh_token) || string.IsNullOrEmpty(provider))
+			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(authHost) || string.IsNullOrEmpty(access_token) || string.IsNullOrEmpty(refresh_token))
 			{
 				return null;
 			}
 
 			Dictionary<string, string> connectionValues = new Dictionary<string, string>();
-			connectionValues.Add(QvxSalesforceConnectionInfo.CONNECTION_PROVIDER, provider);
 			connectionValues.Add(QvxSalesforceConnectionInfo.CONNECTION_USERID, username);
 			connectionValues.Add(QvxSalesforceConnectionInfo.CONNECTION_HOST, host);
 			connectionValues.Add(QvxSalesforceConnectionInfo.CONNECTION_AUTHHOST, authHost);
