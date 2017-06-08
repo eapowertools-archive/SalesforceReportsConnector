@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Data.Schema.ScriptDom;
+using Microsoft.Data.Schema.ScriptDom.Sql;
 using QlikView.Qvx.QvxLibrary;
 using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
@@ -9,22 +13,24 @@ namespace SalesforceReportsConnector.QVX
 {
 	internal class QvxSalesforceReportsConnection : QvxConnection
 	{
+		public Guid myGuid = Guid.NewGuid();
+
 		public override void Init()
 		{
-			MTables = GetTables();
+//			foreach (KeyValuePair<string, string> mParameter in MParameters)
+//			{
+//				TempLogger.Log("param: " + mParameter.Key + "|" + mParameter.Value);
+//			}
+			this.MTables = GetTables();
 		}
 
-		private List<QvxTable> GetTables()
+		public List<QvxTable> GetTables()
 		{
 			List<QvxTable> tables = new List<QvxTable>();
 
-			string host, authHost, access_token, refresh_token, folder_name;
+			string folder_name;
 			try
 			{
-				this.MParameters.TryGetValue("host", out host);
-				this.MParameters.TryGetValue("authHost", out authHost);
-				this.MParameters.TryGetValue("access_token", out access_token);
-				this.MParameters.TryGetValue("refresh_token", out refresh_token);
 				this.MParameters.TryGetValue("folder_name", out folder_name);
 			}
 			catch (Exception e)
@@ -32,56 +38,123 @@ namespace SalesforceReportsConnector.QVX
 				return tables;
 			}
 
-			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(authHost) || string.IsNullOrEmpty(access_token) || string.IsNullOrEmpty(refresh_token) || string.IsNullOrEmpty(folder_name))
+			if (string.IsNullOrEmpty(folder_name))
 			{
 				return tables;
 			}
 
-			Tuple<string, IEnumerable<string>> tuple = EndpointCalls.getTableNameList(host, authHost, access_token, refresh_token, folder_name);
-			this.MParameters["access_token"] = tuple.Item1;
+			IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(this, folder_name);
 
-			foreach (string tableName in tuple.Item2)
+			TempLogger.Log("Dictionary has: " + tableDictionary.Count);
+
+			tables.AddRange(tableDictionary.Select(table =>
 			{
-				TempLogger.Log("Table: " + tableName);
-
-				tables.Add(new QvxTable()
+				QvxField[] fields = GetFields(table.Key);
+				QvxTable.GetRowsHandler handler = () =>
 				{
-					TableName = tableName,
-					Fields = new QvxField[] { },
-					GetRows = GetApplicationEvents
-				});
-			}
+					TempLogger.Log("lets go handler.");
+					return GetData(fields, table.Key);
+				};
+				return new QvxTable()
+				{
+					TableName = table.Value, Fields = fields, GetRows = handler
+				};
+			}));
 
 			return tables;
 		}
 
-		private IEnumerable<QvxDataRow> GetApplicationEvents()
+		private QvxField[] GetFields(string tableID)
 		{
-			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "GetApplicationEvents()");
+			return new QvxField[]
+			{
+				new QvxField("Title" + tableID, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
+				new QvxField("Message" + tableID, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
+			};
+		}
+
+		private IEnumerable<QvxDataRow> GetData(QvxField[] fields, string tableKey)
+		{
+			TempLogger.Log("Ready to get some data for: " + tableKey);
 
 			for (int i = 0; i < 20; i++)
 			{
 				var row = new QvxDataRow();
-				var table = FindTable("DummyData", MTables);
-				row[table.Fields[0]] = "SomeTitle " + i;
-				row[table.Fields[1]] = i + " - This is my message. - " + i;
+				//var table = FindTable(tableKey, this.MTables);
+				row[fields[0]] = "SomeTitle " + i;
+				row[fields[1]] = i + " - This is my message. - " + i;
 				yield return row;
 			}
 		}
 
 		public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
 		{
-			/* Make sure to remove your quotesuffix, quoteprefix, 
-             * quotesuffixfordoublequotes, quoteprefixfordoublequotes
-             * as defined in selectdialog.js somewhere around here.
-             * 
-             * In this example it is an escaped double quote that is
-             * the quoteprefix/suffix
-             */
+			QvxDataTable returnTable = null;
 
-			query = Regex.Replace(query, "\\\"", "");
+			IList<ParseError> errors = null;
+			var parser = new TSql100Parser(true);
+			TextReader reader = new StringReader(query);
+			TSqlScript script = parser.Parse(reader, out errors) as TSqlScript;
 
-			return base.ExtractQuery(query, qvxTables);
+			IList<TSqlParserToken> tokens = script.Batches[0].Statements[0].ScriptTokenStream;
+
+			// get record folder
+			TSqlParserToken fromToken = tokens.First(t => t.TokenType == TSqlTokenType.From);
+			int indexOfFromToken = tokens.IndexOf(fromToken);
+			IEnumerable<TSqlParserToken> tableTokens = tokens.Skip(indexOfFromToken);
+			TSqlParserToken identifier = tableTokens.First(t => t.TokenType == TSqlTokenType.Identifier || t.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier);
+			string folderName = identifier.Text;
+			if (identifier.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier)
+			{
+				folderName = folderName.Substring(1, folderName.Length - 2);
+			}
+			TempLogger.Log("folder name: " + folderName);
+
+			// get report name
+			tableTokens = tokens.Skip(tokens.IndexOf(identifier));
+			TSqlParserToken reportSeparator = tableTokens.First(t => t.TokenType == TSqlTokenType.Dot);
+			tableTokens = tokens.Skip(tokens.IndexOf(reportSeparator));
+			TSqlParserToken reportNameToken = tableTokens.First(t => t.TokenType == TSqlTokenType.Identifier || t.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier);
+			string reportName = reportNameToken.Text;
+			TempLogger.Log("report name: " + reportName);
+
+			if (reportNameToken.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier)
+			{
+				reportName = reportName.Substring(1, reportName.Length - 2);
+			}
+			TempLogger.Log("report name: " + reportName);
+
+			if (this.MParameters.ContainsKey("folder_name"))
+			{
+				if (folderName == this.MParameters["folder_name"] && this.MTables == null)
+				{
+					this.Init();
+				}
+				else if (folderName != this.MParameters["folder_name"])
+				{
+					this.MParameters["folder_name"] = folderName;
+					this.Init();
+				}
+			}
+			else
+			{
+				this.MParameters.Add("folder_name", folderName);
+				this.Init();
+			}
+
+			try
+			{
+				var newTable = this.FindTable(reportName, this.MTables);
+				TempLogger.Log("Got a report." + this.MTables.Count);
+				TempLogger.Log(newTable.TableName);
+				returnTable = new QvxDataTable(newTable);
+			}
+			catch (Exception e)
+			{
+				TempLogger.Log("Exception: " + e.Message);
+			}
+
+			return returnTable;
 		}
 	}
 }

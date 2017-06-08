@@ -45,8 +45,10 @@
                                 var results = JSON.parse( info.qMessage );
                                 var username = results['username'];
                                 var host = results['host'];
-                                var connectionString = createCustomConnectionString("SalesforceReportsConnector.exe", "host=" + host + ";authHost=" + $scope.URL + ";access_token=" + result['access_token'] + ";refresh_token=" + result['refresh_token'] + ";");
-                                input.serverside.createNewConnection($scope.connectorName, connectionString, username); 
+                                input.serverside.sendJsonRequest( "API-BuildConnectionString", host, $scope.URL, result['access_token'], result['refresh_token'] ).then( function ( connString ) {
+                                    var connectionString = createCustomConnectionString( "SalesforceReportsConnector.exe", connString.qMessage );
+                                    input.serverside.createNewConnection( $scope.connectorName, connectionString, username );
+                                } );
                             });
                         });
 
