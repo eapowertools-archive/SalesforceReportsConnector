@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.Data.Schema.ScriptDom;
 using Microsoft.Data.Schema.ScriptDom.Sql;
 using QlikView.Qvx.QvxLibrary;
+using SalesforceReportsConnector.Cache;
 using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 
@@ -38,40 +39,15 @@ namespace SalesforceReportsConnector.QVX
 				return tables;
 			}
 
-			IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(this, folder_name);
-			tables.AddRange(tableDictionary.Select(table =>
+			if (!TableCache.IsFolder(folder_name))
 			{
-				QvxField[] fields = GetFields(table.Key);
-				QvxTable.GetRowsHandler handler = () => { return GetData(fields, table.Key); };
-				return new QvxTable()
-				{
-					TableName = table.Value, Fields = fields, GetRows = handler
-				};
-			}));
-
-			return tables;
-		}
-
-		private QvxField[] GetFields(string tableID)
-		{
-			IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(this, tableID);
-
-			QvxField[] qvxFields = fields.Select(f => new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)).ToArray();
-
-			return qvxFields;
-		}
-
-		private IEnumerable<QvxDataRow> GetData(QvxField[] fields, string tableKey)
-		{
-			for (int i = 0; i < 20; i++)
-			{
-				var row = new QvxDataRow();
-				//var table = FindTable(tableKey, this.MTables);
-				row[fields[0]] = "SomeTitle " + i;
-				row[fields[1]] = i + " - This is my message. - " + i;
-				yield return row;
+				TableCache.SetCurrentFolder(this, folder_name);
 			}
+
+			return TableCache.Tables;
 		}
+
+
 
 		public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
 		{

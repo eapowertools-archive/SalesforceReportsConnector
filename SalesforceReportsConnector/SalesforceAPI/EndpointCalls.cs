@@ -41,6 +41,8 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						}
 					}
 					connection.MParameters[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN] = newAccessToken;
+					TempLogger.Log("Access token:");
+					TempLogger.Log(newAccessToken);
 					return endpointCall(newAccessToken);
 				}
 				else
@@ -233,15 +235,9 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						String responseString = reader.ReadToEnd();
 						JObject jsonResponse = JObject.Parse(responseString);
 
+						JToken columnArray = jsonResponse["reportExtendedMetadata"]["detailColumnInfo"];
+						IDictionary<string, Type> columns = columnArray.ToDictionary(c => c.First["label"].Value<string>(), t => (t.First["dataType"].Value<string>() == "int") ? typeof(int) : typeof(string));
 
-
-						JArray columnsArray = (JArray)(jsonResponse["reportTypeMetadata"]["categories"]);
-						IDictionary<string, Type> columns = columnsArray.Children().SelectMany(c => c.SelectToken("columns").Children().Select(p => p.Path)).ToDictionary(a => a, b => typeof(string));
-
-						//(from token in columnsArray.Children() select token.SelectToken("columns") into cols where cols != null from child in cols.Children() let indexOfPeriod = child.Path.LastIndexOf(".") + 1 select child.Path.Substring(indexOfPeriod, child.Path.Length - indexOfPeriod)).ToDictionary(t => t, r => typeof(String));
-
-						//folders = folders.Where(x => !string.IsNullOrEmpty(x["Name"].Value<string>()) && x["Name"].Value<string>() != "*");
-						//						return folders.Select(f => f["Name"].Value<string>());
 						return columns;
 
 					}
