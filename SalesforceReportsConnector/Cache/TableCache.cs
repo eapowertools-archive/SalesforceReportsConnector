@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using QlikView.Qvx.QvxLibrary;
+using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.Cache
@@ -15,19 +15,28 @@ namespace SalesforceReportsConnector.Cache
 		public static void SetCurrentFolder(QvxConnection connection, string newFolder)
 		{
 			CurrentFolder = newFolder;
-
 			IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(connection, CurrentFolder);
-			Tables.AddRange(tableDictionary.Select(table =>
+			TempLogger.Log("got: " + tableDictionary.Count);
+			if (Tables != null)
 			{
-				QvxField[] fields = GetFields(connection, table.Key);
-				QvxTable.GetRowsHandler handler = () => { return GetData(connection, fields, table.Key); };
-				return new QvxTable()
+				Tables.Clear();
+			}
+			TempLogger.Log("ready to add more tables");
+
+			Tables = new List<QvxTable>(tableDictionary.Select(table =>
 				{
-					TableName = table.Value,
-					Fields = fields,
-					GetRows = handler
-				};
-			}));
+					TempLogger.Log("Adding table " + table.Key);
+					QvxField[] fields = GetFields(connection, table.Key);
+					QvxTable.GetRowsHandler handler = () => { return GetData(connection, fields, table.Key); };
+					return new QvxTable()
+					{
+						TableName = table.Value,
+						Fields = fields,
+						GetRows = handler
+					};
+				})
+			);
+			TempLogger.Log("Done adding tables.");
 		}
 
 		public static bool IsFolder(string folder)
@@ -42,7 +51,9 @@ namespace SalesforceReportsConnector.Cache
 
 		private static QvxField[] GetFields(QvxConnection connection, string tableID)
 		{
+			TempLogger.Log("Getting fields for: " + tableID);
 			IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
+			TempLogger.Log("Got fields.");
 
 			QvxField[] qvxFields = fields.Select(f => new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)).ToArray();
 
