@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Microsoft.Data.Schema.ScriptDom;
 using Microsoft.Data.Schema.ScriptDom.Sql;
 using QlikView.Qvx.QvxLibrary;
@@ -17,10 +16,6 @@ namespace SalesforceReportsConnector.QVX
 
 		public override void Init()
 		{
-//			foreach (KeyValuePair<string, string> mParameter in MParameters)
-//			{
-//				TempLogger.Log("param: " + mParameter.Key + "|" + mParameter.Value);
-//			}
 			this.MTables = GetTables();
 		}
 
@@ -45,16 +40,10 @@ namespace SalesforceReportsConnector.QVX
 
 			IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(this, folder_name);
 
-			TempLogger.Log("Dictionary has: " + tableDictionary.Count);
-
 			tables.AddRange(tableDictionary.Select(table =>
 			{
 				QvxField[] fields = GetFields(table.Key);
-				QvxTable.GetRowsHandler handler = () =>
-				{
-					TempLogger.Log("lets go handler.");
-					return GetData(fields, table.Key);
-				};
+				QvxTable.GetRowsHandler handler = () => { return GetData(fields, table.Key); };
 				return new QvxTable()
 				{
 					TableName = table.Value, Fields = fields, GetRows = handler
@@ -75,8 +64,6 @@ namespace SalesforceReportsConnector.QVX
 
 		private IEnumerable<QvxDataRow> GetData(QvxField[] fields, string tableKey)
 		{
-			TempLogger.Log("Ready to get some data for: " + tableKey);
-
 			for (int i = 0; i < 20; i++)
 			{
 				var row = new QvxDataRow();
@@ -108,7 +95,6 @@ namespace SalesforceReportsConnector.QVX
 			{
 				folderName = folderName.Substring(1, folderName.Length - 2);
 			}
-			TempLogger.Log("folder name: " + folderName);
 
 			// get report name
 			tableTokens = tokens.Skip(tokens.IndexOf(identifier));
@@ -116,13 +102,11 @@ namespace SalesforceReportsConnector.QVX
 			tableTokens = tokens.Skip(tokens.IndexOf(reportSeparator));
 			TSqlParserToken reportNameToken = tableTokens.First(t => t.TokenType == TSqlTokenType.Identifier || t.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier);
 			string reportName = reportNameToken.Text;
-			TempLogger.Log("report name: " + reportName);
 
 			if (reportNameToken.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier)
 			{
 				reportName = reportName.Substring(1, reportName.Length - 2);
 			}
-			TempLogger.Log("report name: " + reportName);
 
 			if (this.MParameters.ContainsKey("folder_name"))
 			{
@@ -142,17 +126,8 @@ namespace SalesforceReportsConnector.QVX
 				this.Init();
 			}
 
-			try
-			{
-				var newTable = this.FindTable(reportName, this.MTables);
-				TempLogger.Log("Got a report." + this.MTables.Count);
-				TempLogger.Log(newTable.TableName);
-				returnTable = new QvxDataTable(newTable);
-			}
-			catch (Exception e)
-			{
-				TempLogger.Log("Exception: " + e.Message);
-			}
+			var newTable = this.FindTable(reportName, this.MTables);
+			returnTable = new QvxDataTable(newTable);
 
 			return returnTable;
 		}

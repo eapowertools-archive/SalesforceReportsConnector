@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using QlikView.Qvx.QvxLibrary;
-using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 
 namespace SalesforceReportsConnector.QVX
@@ -116,9 +115,7 @@ namespace SalesforceReportsConnector.QVX
 			{
 				connection.MParameters.Add("folder_name", folderName);
 			}
-
 			connection.Init();
-			TempLogger.Log("Tables - Connection GUID: " + ((QvxSalesforceReportsConnection)connection).myGuid.ToString());
 
 			return new QvDataContractTableListResponse
 			{
@@ -137,16 +134,12 @@ namespace SalesforceReportsConnector.QVX
 				connection.MParameters.Add("folder_name", folderName);
 			}
 			connection.Init();
-			TempLogger.Log("Calling init: " + folderName);
 			QvxTable currentTable = connection.FindTable(table, connection.MTables);
-			TempLogger.Log("Tables: " + connection.MTables.Count);
-			TempLogger.Log("Is it null? " + (currentTable == null));
 
 			return new QvDataContractFieldListResponse
 			{
 				qFields = (currentTable != null) ? currentTable.Fields : new QvxField[0]
 			};
-		
 		}
 	}
 }
