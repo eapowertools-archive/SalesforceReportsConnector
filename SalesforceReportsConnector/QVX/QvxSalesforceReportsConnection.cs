@@ -39,7 +39,6 @@ namespace SalesforceReportsConnector.QVX
 			}
 
 			IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(this, folder_name);
-
 			tables.AddRange(tableDictionary.Select(table =>
 			{
 				QvxField[] fields = GetFields(table.Key);
@@ -55,11 +54,11 @@ namespace SalesforceReportsConnector.QVX
 
 		private QvxField[] GetFields(string tableID)
 		{
-			return new QvxField[]
-			{
-				new QvxField("Title" + tableID, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-				new QvxField("Message" + tableID, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
-			};
+			IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(this, tableID);
+
+			QvxField[] qvxFields = fields.Select(f => new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)).ToArray();
+
+			return qvxFields;
 		}
 
 		private IEnumerable<QvxDataRow> GetData(QvxField[] fields, string tableKey)
@@ -80,8 +79,11 @@ namespace SalesforceReportsConnector.QVX
 
 			IList<ParseError> errors = null;
 			var parser = new TSql100Parser(true);
-			TextReader reader = new StringReader(query);
-			TSqlScript script = parser.Parse(reader, out errors) as TSqlScript;
+			TSqlScript script;
+			using (TextReader reader = new StringReader(query))
+			{
+				script = parser.Parse(reader, out errors) as TSqlScript;
+			}
 
 			IList<TSqlParserToken> tokens = script.Batches[0].Statements[0].ScriptTokenStream;
 

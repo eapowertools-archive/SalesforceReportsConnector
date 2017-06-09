@@ -18,6 +18,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			try
 			{
 				return endpointCall(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN]);
+
 			}
 			catch (WebException e)
 			{
@@ -203,6 +204,49 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			connectionValues.Add(QvxSalesforceConnectionInfo.CONNECTION_REFRESH_TOKEN, refresh_token);
 
 			return connectionValues;
+		}
+
+		public static IDictionary<string, Type> GetFieldsFromReport(QvxConnection connection, string reportID)
+		{
+			TempLogger.Log("Report ID: " + reportID);
+			IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
+			if (connectionParams == null)
+			{
+				return new Dictionary<string, Type>();
+			}
+
+			return ValidateAccessTokenAndPerformRequest<IDictionary<string, Type>>(connection, connectionParams, (accessToken) =>
+			{
+				Uri hostUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_HOST]);
+				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
+					"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + "/analytics/reports/" + reportID + "/describe"));
+				request.Method = "GET";
+				WebHeaderCollection headers = new WebHeaderCollection();
+				headers.Add("Authorization", "Bearer " + accessToken);
+				request.Headers = headers;
+
+				using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+				{
+					using (Stream stream = response.GetResponseStream())
+					{
+						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+						String responseString = reader.ReadToEnd();
+						JObject jsonResponse = JObject.Parse(responseString);
+
+
+
+						JArray columnsArray = (JArray)(jsonResponse["reportTypeMetadata"]["categories"]);
+						IDictionary<string, Type> columns = columnsArray.Children().SelectMany(c => c.SelectToken("columns").Children().Select(p => p.Path)).ToDictionary(a => a, b => typeof(string));
+
+						//(from token in columnsArray.Children() select token.SelectToken("columns") into cols where cols != null from child in cols.Children() let indexOfPeriod = child.Path.LastIndexOf(".") + 1 select child.Path.Substring(indexOfPeriod, child.Path.Length - indexOfPeriod)).ToDictionary(t => t, r => typeof(String));
+
+						//folders = folders.Where(x => !string.IsNullOrEmpty(x["Name"].Value<string>()) && x["Name"].Value<string>() != "*");
+						//						return folders.Select(f => f["Name"].Value<string>());
+						return columns;
+
+					}
+				}
+			});
 		}
 	}
 }
