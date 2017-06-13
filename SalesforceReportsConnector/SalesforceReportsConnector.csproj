@@ -120,7 +120,7 @@
   <PropertyGroup>
     <PostBuildEvent>"$(ProjectDir)..\..\verpatch.exe" "$(TargetPath)" /s "QlikView Connector" "Salesforce Reports Connector"
 
-(robocopy "$(TargetDir)\" "C:\ProgramData\Qlik\Custom Data\SalesforceReportsConnector" /E) ^&amp; IF %25ERRORLEVEL%25 LEQ 1 exit 0</PostBuildEvent>
+(robocopy "$(TargetDir)\" "C:\Program Files\Common Files\Qlik\Custom Data\SalesforceReportsConnector" /E) ^&amp; IF %25ERRORLEVEL%25 LEQ 1 exit 0</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
