@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.Data.Schema.ScriptDom;
-using Microsoft.Data.Schema.ScriptDom.Sql;
 using QlikView.Qvx.QvxLibrary;
 using SalesforceReportsConnector.Cache;
 using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
+using Microsoft.SqlServer.TransactSql.ScriptDom;
 
 namespace SalesforceReportsConnector.QVX
 {
