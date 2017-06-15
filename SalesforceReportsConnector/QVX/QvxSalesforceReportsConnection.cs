@@ -78,7 +78,7 @@ namespace SalesforceReportsConnector.QVX
 		private static List<QvxTable> BuildTablesAsync(QvxConnection connection, IDictionary<string, string> tableDictionary)
 		{
 			ConcurrentDictionary<string, string> concurrentDictionary = new ConcurrentDictionary<string, string>(tableDictionary);
-			int concurrentTables = 10;
+			int concurrentTables = 15;
 			if (concurrentDictionary.Count < concurrentTables)
 			{
 				concurrentTables = concurrentDictionary.Count;
@@ -88,12 +88,11 @@ namespace SalesforceReportsConnector.QVX
 			Task<QvxTable>[] taskArray = new Task<QvxTable>[concurrentTables];
 			for (int i = 0; i < concurrentTables; i++)
 			{
-				Guid newGuid = Guid.NewGuid();
 				string key = concurrentDictionary.First().Key;
 				string name = "";
 				concurrentDictionary.TryRemove(key, out name);
 
-				taskArray[i] = Task<QvxTable>.Factory.StartNew(() => BuildSingleTable(connection, key, name, newGuid));
+				taskArray[i] = Task<QvxTable>.Factory.StartNew(() => BuildSingleTable(connection, key, name));
 			}
 
 			while (concurrentDictionary.Count > 0)
@@ -102,11 +101,10 @@ namespace SalesforceReportsConnector.QVX
 				int taskIndex = Task.WaitAny(taskArray);
 
 				newTables.Add(taskArray[taskIndex].Result);
-				Guid newGuid = Guid.NewGuid();
 				string key = concurrentDictionary.First().Key;
 				string name = "";
 				concurrentDictionary.TryRemove(key, out name);
-				taskArray[taskIndex] = Task<QvxTable>.Factory.StartNew(() => BuildSingleTable(connection, key, name, newGuid));
+				taskArray[taskIndex] = Task<QvxTable>.Factory.StartNew(() => BuildSingleTable(connection, key, name));
 			}
 			
 			foreach(Task<QvxTable> t in taskArray)
@@ -122,7 +120,7 @@ namespace SalesforceReportsConnector.QVX
 			return newTables.Where(t => t.TableName != "---invalid---" && t.Fields.Length != 0).ToList();
 		}
 
-		private static QvxTable BuildSingleTable(QvxConnection connection, string tableID, string tableName, Guid taskID)
+		private static QvxTable BuildSingleTable(QvxConnection connection, string tableID, string tableName)
 		{
 			QvxField[] fields = GetFields(connection, tableID);
 			if (fields.Length == 0)
