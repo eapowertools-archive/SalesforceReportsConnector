@@ -77,49 +77,41 @@ namespace SalesforceReportsConnector.QVX
 
 		private static List<QvxTable> BuildTablesAsync(QvxConnection connection, IDictionary<string, string> tableDictionary)
 		{
-			ConcurrentDictionary<string, string> concurrentDictionary = new ConcurrentDictionary<string, string>(tableDictionary);
 			int index = 0;
 			int concurrentTables = 15;
-			if (concurrentDictionary.Count < concurrentTables)
+			if (tableDictionary.Count < concurrentTables)
 			{
-				concurrentTables = concurrentDictionary.Count;
+				concurrentTables = tableDictionary.Count;
 			}
 			List<QvxTable> newTables = new List<QvxTable>();
 
 			Task<QvxTable>[] taskArray = new Task<QvxTable>[concurrentTables];
 			for (int i = 0; i < concurrentTables; i++)
 			{
-				string key = concurrentDictionary.ElementAt(index).Key;
-				string value = concurrentDictionary.ElementAt(index).Value;
+				string key = tableDictionary.ElementAt(index).Key;
+				string value = tableDictionary.ElementAt(index).Value;
 				taskArray[i] = Task<QvxTable>.Factory.StartNew(() => BuildSingleTable(connection, key, value));
 				index++;
 			}
 
-			while (index < (concurrentDictionary.Count))
+			while (index < (tableDictionary.Count))
 			{
-				TempLogger.Log("my index is at: " + index);
 				int taskIndex = Task.WaitAny(taskArray);
 				newTables.Add(taskArray[taskIndex].Result);
-				string key = concurrentDictionary.ElementAt(index).Key;
-				string value = concurrentDictionary.ElementAt(index).Value;
+				string key = tableDictionary.ElementAt(index).Key;
+				string value = tableDictionary.ElementAt(index).Value;
 				taskArray[taskIndex] = Task<QvxTable>.Factory.StartNew(() => BuildSingleTable(connection, key, value));
 				index++;
 			}
-
-			TempLogger.Log("done reducing");
 			
 			foreach(Task<QvxTable> t in taskArray)
 			{
-				TempLogger.Log("trying to close up shop");
-
 				if (!t.IsCompleted)
 				{
 					t.Wait();
 				}
 
 				newTables.Add(t.Result);
-				TempLogger.Log("added!");
-
 			}
 
 			return newTables.Where(t => t.TableName != "---invalid---" && t.Fields.Length != 0).ToList();
