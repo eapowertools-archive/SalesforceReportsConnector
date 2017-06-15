@@ -117,7 +117,6 @@ namespace SalesforceReportsConnector.SalesforceAPI
                         IList<string> folderNames = folders.Select(f => f["Name"].Value<string>()).ToList();
                         folderNames.Insert(0, "Private Reports");
                         folderNames.Insert(0, "Public Reports");
-                        //https://eu1.salesforce.com/services/data/v39.0/query?q=SELECT Id,Name FROM Report WHERE FolderName = 'Private Reports' ORDER BY Name
                         return folderNames;
                     }
 				}
@@ -274,12 +273,40 @@ namespace SalesforceReportsConnector.SalesforceAPI
                 return new List<QvxDataRow>();
             }
 
-            foreach(KeyValuePair<string, string> param in connectionParams)
-            {
-                TempLogger.Log("param: " + param.Key + " | " + param.Value);
-            }
+			return ValidateAccessTokenAndPerformRequest<IEnumerable<QvxDataRow>>(connection, connectionParams, (accessToken) =>
+			{
+				Uri hostUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_HOST]);
+				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
+					"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + "/analytics/reports/" + reportID + "?includeDetails=true"));
+				request.Method = "GET";
+				WebHeaderCollection headers = new WebHeaderCollection();
+				headers.Add("Authorization", "Bearer " + accessToken);
+				request.Headers = headers;
 
-            return new List<QvxDataRow>();
+				using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+				{
+					using (Stream stream = response.GetResponseStream())
+					{
+						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+						String responseString = reader.ReadToEnd();
+						JObject jsonResponse = JObject.Parse(responseString);
+
+						IEnumerable<QvxDataRow> rows = jsonResponse["factMap"].First.First["rows"].Values<JObject>().Select(
+							dr => {
+								QvxDataRow row = new QvxDataRow();
+								for (int i = 0; i < fields.Length; i++)
+								{
+									row[fields[i]] = dr.First.First.ElementAt(i)["label"].Value<string>();
+								}
+								return row;
+							}
+						);
+
+						return rows;
+					}
+				}
+			});
+
         }
     }
 }
