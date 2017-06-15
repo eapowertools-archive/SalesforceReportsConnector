@@ -42,7 +42,6 @@
                     instance_url: $scope.instance_url,
                     id: $scope.id
                 };
-
                 $scope.destroyComponent();
                 $scope.deferredResult.resolve(returnVal);
             };

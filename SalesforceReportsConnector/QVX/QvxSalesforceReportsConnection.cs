@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using QlikView.Qvx.QvxLibrary;
-using SalesforceReportsConnector.Cache;
 using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 using Microsoft.SqlServer.TransactSql.ScriptDom;
+using System.Diagnostics;
 
 namespace SalesforceReportsConnector.QVX
 {
@@ -28,7 +28,7 @@ namespace SalesforceReportsConnector.QVX
 			{
 				this.MParameters.TryGetValue("folder_name", out folder_name);
 			}
-			catch (Exception e)
+			catch
 			{
 				return tables;
 			}
@@ -38,17 +38,46 @@ namespace SalesforceReportsConnector.QVX
 				return tables;
 			}
 
-			if (!TableCache.IsFolder(folder_name))
-			{
-				TableCache.SetCurrentFolder(this, folder_name);
-			}
+            IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(this, folder_name);
 
-			return TableCache.Tables;
+
+            List<QvxTable> newTables = new List<QvxTable>(tableDictionary.Select(table =>
+            {
+                TempLogger.Log("Adding table " + table.Key);
+                QvxField[] fields = GetFields(this, table.Key);
+                QvxTable.GetRowsHandler handler = () => { return GetData(this, fields, table.Key); };
+                return new QvxTable()
+                {
+                    TableName = table.Value,
+                    Fields = fields,
+                    GetRows = handler
+                };
+            })
+            );
+
+            return newTables;
 		}
 
+        private static QvxField[] GetFields(QvxConnection connection, string tableID)
+        {
+            TempLogger.Log("Getting fields for: " + tableID);
+            IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
+            TempLogger.Log("Got fields.");
 
+            QvxField[] qvxFields = fields.Select(f => new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)).ToArray();
 
-		public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
+            return qvxFields;
+        }
+
+        private static IEnumerable<QvxDataRow> GetData(QvxConnection connection, QvxField[] fields, string reportID)
+        {
+
+            IEnumerable<QvxDataRow> rows = EndpointCalls.GetReportData(connection, fields, reportID);
+
+            return rows;
+        }
+
+        public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
 		{
 			QvxDataTable returnTable = null;
 

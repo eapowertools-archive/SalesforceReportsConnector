@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using QlikView.Qvx.QvxLibrary;
 using SalesforceReportsConnector.SalesforceAPI;
+using SalesforceReportsConnector.Logger;
 
 namespace SalesforceReportsConnector.QVX
 {
@@ -21,6 +22,7 @@ namespace SalesforceReportsConnector.QVX
 
 		public override string HandleJsonRequest(string method, string[] userParameters, QvxConnection connection)
 		{
+            TempLogger.Log("logging stuff.");
 			if (method.StartsWith("API-"))
 			{
 				return HandleAPIRequests(method, userParameters, connection);
