@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using Microsoft.Data.Schema.ScriptDom;
-using Microsoft.Data.Schema.ScriptDom.Sql;
 using QlikView.Qvx.QvxLibrary;
 using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
+using Microsoft.SqlServer.TransactSql.ScriptDom;
+using System.Diagnostics;
 
 namespace SalesforceReportsConnector.QVX
 {
@@ -17,10 +16,6 @@ namespace SalesforceReportsConnector.QVX
 
 		public override void Init()
 		{
-//			foreach (KeyValuePair<string, string> mParameter in MParameters)
-//			{
-//				TempLogger.Log("param: " + mParameter.Key + "|" + mParameter.Value);
-//			}
 			this.MTables = GetTables();
 		}
 
@@ -33,7 +28,7 @@ namespace SalesforceReportsConnector.QVX
 			{
 				this.MParameters.TryGetValue("folder_name", out folder_name);
 			}
-			catch (Exception e)
+			catch
 			{
 				return tables;
 			}
@@ -43,58 +38,56 @@ namespace SalesforceReportsConnector.QVX
 				return tables;
 			}
 
-			IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(this, folder_name);
+            IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(this, folder_name);
 
-			TempLogger.Log("Dictionary has: " + tableDictionary.Count);
 
-			tables.AddRange(tableDictionary.Select(table =>
-			{
-				QvxField[] fields = GetFields(table.Key);
-				QvxTable.GetRowsHandler handler = () =>
-				{
-					TempLogger.Log("lets go handler.");
-					return GetData(fields, table.Key);
-				};
-				return new QvxTable()
-				{
-					TableName = table.Value, Fields = fields, GetRows = handler
-				};
-			}));
+            List<QvxTable> newTables = new List<QvxTable>(tableDictionary.Select(table =>
+            {
+                TempLogger.Log("Adding table " + table.Key);
+                QvxField[] fields = GetFields(this, table.Key);
+                QvxTable.GetRowsHandler handler = () => { return GetData(this, fields, table.Key); };
+                return new QvxTable()
+                {
+                    TableName = table.Value,
+                    Fields = fields,
+                    GetRows = handler
+                };
+            })
+            );
 
-			return tables;
+            return newTables;
 		}
 
-		private QvxField[] GetFields(string tableID)
-		{
-			return new QvxField[]
-			{
-				new QvxField("Title" + tableID, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-				new QvxField("Message" + tableID, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
-			};
-		}
+        private static QvxField[] GetFields(QvxConnection connection, string tableID)
+        {
+            TempLogger.Log("Getting fields for: " + tableID);
+            IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
+            TempLogger.Log("Got fields.");
 
-		private IEnumerable<QvxDataRow> GetData(QvxField[] fields, string tableKey)
-		{
-			TempLogger.Log("Ready to get some data for: " + tableKey);
+            QvxField[] qvxFields = fields.Select(f => new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)).ToArray();
 
-			for (int i = 0; i < 20; i++)
-			{
-				var row = new QvxDataRow();
-				//var table = FindTable(tableKey, this.MTables);
-				row[fields[0]] = "SomeTitle " + i;
-				row[fields[1]] = i + " - This is my message. - " + i;
-				yield return row;
-			}
-		}
+            return qvxFields;
+        }
 
-		public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
+        private static IEnumerable<QvxDataRow> GetData(QvxConnection connection, QvxField[] fields, string reportID)
+        {
+
+            IEnumerable<QvxDataRow> rows = EndpointCalls.GetReportData(connection, fields, reportID);
+
+            return rows;
+        }
+
+        public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
 		{
 			QvxDataTable returnTable = null;
 
 			IList<ParseError> errors = null;
 			var parser = new TSql100Parser(true);
-			TextReader reader = new StringReader(query);
-			TSqlScript script = parser.Parse(reader, out errors) as TSqlScript;
+			TSqlScript script;
+			using (TextReader reader = new StringReader(query))
+			{
+				script = parser.Parse(reader, out errors) as TSqlScript;
+			}
 
 			IList<TSqlParserToken> tokens = script.Batches[0].Statements[0].ScriptTokenStream;
 
@@ -108,7 +101,6 @@ namespace SalesforceReportsConnector.QVX
 			{
 				folderName = folderName.Substring(1, folderName.Length - 2);
 			}
-			TempLogger.Log("folder name: " + folderName);
 
 			// get report name
 			tableTokens = tokens.Skip(tokens.IndexOf(identifier));
@@ -116,13 +108,11 @@ namespace SalesforceReportsConnector.QVX
 			tableTokens = tokens.Skip(tokens.IndexOf(reportSeparator));
 			TSqlParserToken reportNameToken = tableTokens.First(t => t.TokenType == TSqlTokenType.Identifier || t.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier);
 			string reportName = reportNameToken.Text;
-			TempLogger.Log("report name: " + reportName);
 
 			if (reportNameToken.TokenType == TSqlTokenType.AsciiStringOrQuotedIdentifier)
 			{
 				reportName = reportName.Substring(1, reportName.Length - 2);
 			}
-			TempLogger.Log("report name: " + reportName);
 
 			if (this.MParameters.ContainsKey("folder_name"))
 			{
@@ -142,17 +132,8 @@ namespace SalesforceReportsConnector.QVX
 				this.Init();
 			}
 
-			try
-			{
-				var newTable = this.FindTable(reportName, this.MTables);
-				TempLogger.Log("Got a report." + this.MTables.Count);
-				TempLogger.Log(newTable.TableName);
-				returnTable = new QvxDataTable(newTable);
-			}
-			catch (Exception e)
-			{
-				TempLogger.Log("Exception: " + e.Message);
-			}
+			var newTable = this.FindTable(reportName, this.MTables);
+			returnTable = new QvxDataTable(newTable);
 
 			return returnTable;
 		}

@@ -18,6 +18,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			try
 			{
 				return endpointCall(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN]);
+
 			}
 			catch (WebException e)
 			{
@@ -40,6 +41,8 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						}
 					}
 					connection.MParameters[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN] = newAccessToken;
+					TempLogger.Log("Access token:");
+					TempLogger.Log(newAccessToken);
 					return endpointCall(newAccessToken);
 				}
 				else
@@ -111,8 +114,11 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						JObject jsonResponse = JObject.Parse(responseString);
 						IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
 						folders = folders.Where(x => !string.IsNullOrEmpty(x["Name"].Value<string>()) && x["Name"].Value<string>() != "*");
-						return folders.Select(f => f["Name"].Value<string>());
-					}
+                        IList<string> folderNames = folders.Select(f => f["Name"].Value<string>()).ToList();
+                        folderNames.Insert(0, "Private Reports");
+                        folderNames.Insert(0, "Public Reports");
+                        return folderNames;
+                    }
 				}
 			});
 		}
@@ -128,35 +134,52 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			return ValidateAccessTokenAndPerformRequest<IDictionary<string, string>>(connection, connectionParams, (accessToken) =>
 			{
 				Uri hostUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_HOST]);
-				HttpWebRequest request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
-					"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Folder WHERE Type = 'Report' AND Name = '{0}' ORDER BY Name", databaseName)));
-				request.Method = "GET";
-				WebHeaderCollection headers = new WebHeaderCollection();
-				headers.Add("Authorization", "Bearer " + accessToken);
-				request.Headers = headers;
-
+				HttpWebRequest request;
+				WebHeaderCollection headers;
 				string databaseId = "";
-				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
+				if (databaseName == "Public Reports" || databaseName == "Private Reports")
 				{
-					using (Stream stream = response.GetResponseStream())
+					databaseId = databaseName;
+				}
+				else
+				{
+					request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
+						"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Folder WHERE Type = 'Report' AND Name = '{0}' ORDER BY Name", databaseName)));
+					request.Method = "GET";
+					headers = new WebHeaderCollection();
+					headers.Add("Authorization", "Bearer " + accessToken);
+					request.Headers = headers;
+
+					using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
 					{
-						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-						String responseString = reader.ReadToEnd();
-						JObject jsonResponse = JObject.Parse(responseString);
-						IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
-						if (folders.Count() > 1)
+						using (Stream stream = response.GetResponseStream())
 						{
-							throw new DataMisalignedException("Too many matches for folder: " + databaseName);
+							StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+							String responseString = reader.ReadToEnd();
+							JObject jsonResponse = JObject.Parse(responseString);
+							IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
+							if (folders.Count() > 1)
+							{
+								throw new DataMisalignedException("Too many matches for folder: " + databaseName);
+							}
+							JObject firstFolder = folders.First();
+							databaseId = firstFolder["Id"].Value<string>();
 						}
-						JObject firstFolder = folders.First();
-						databaseId = firstFolder["Id"].Value<string>();
 					}
 				}
 
 				return ValidateAccessTokenAndPerformRequest<IDictionary<string, string>>(connection, connectionParams, (newAccessToken) =>
 				{
-					request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
-						"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Report WHERE OwnerId = '{0}' ORDER BY Name", databaseId)));
+					if (databaseId == "Public Reports" || databaseId == "Private Reports")
+					{
+						request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
+						  "/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Report WHERE FolderName = '{0}' ORDER BY Name", databaseId)));
+					}
+					else
+					{
+						request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
+						  "/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Report WHERE OwnerId = '{0}' ORDER BY Name", databaseId)));
+					}
 					request.Method = "GET";
 					headers = new WebHeaderCollection();
 					headers.Add("Authorization", "Bearer " + newAccessToken);
@@ -204,5 +227,86 @@ namespace SalesforceReportsConnector.SalesforceAPI
 
 			return connectionValues;
 		}
-	}
+
+		public static IDictionary<string, Type> GetFieldsFromReport(QvxConnection connection, string reportID)
+		{
+			TempLogger.Log("Report ID: " + reportID);
+			IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
+			if (connectionParams == null)
+			{
+				return new Dictionary<string, Type>();
+			}
+
+			return ValidateAccessTokenAndPerformRequest<IDictionary<string, Type>>(connection, connectionParams, (accessToken) =>
+			{
+				Uri hostUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_HOST]);
+				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
+					"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + "/analytics/reports/" + reportID + "/describe"));
+				request.Method = "GET";
+				WebHeaderCollection headers = new WebHeaderCollection();
+				headers.Add("Authorization", "Bearer " + accessToken);
+				request.Headers = headers;
+
+				using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+				{
+					using (Stream stream = response.GetResponseStream())
+					{
+						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+						String responseString = reader.ReadToEnd();
+						JObject jsonResponse = JObject.Parse(responseString);
+
+						JToken columnArray = jsonResponse["reportExtendedMetadata"]["detailColumnInfo"];
+						IDictionary<string, Type> columns = columnArray.ToDictionary(c => c.First["label"].Value<string>(), t => (t.First["dataType"].Value<string>() == "int") ? typeof(int) : typeof(string));
+
+						return columns;
+
+					}
+				}
+			});
+		}
+
+        public static IEnumerable<QvxDataRow> GetReportData(QvxConnection connection, QvxField[] fields, string reportID)
+        {
+            IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
+            if (connectionParams == null)
+            {
+                return new List<QvxDataRow>();
+            }
+
+			return ValidateAccessTokenAndPerformRequest<IEnumerable<QvxDataRow>>(connection, connectionParams, (accessToken) =>
+			{
+				Uri hostUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_HOST]);
+				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
+					"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + "/analytics/reports/" + reportID + "?includeDetails=true"));
+				request.Method = "GET";
+				WebHeaderCollection headers = new WebHeaderCollection();
+				headers.Add("Authorization", "Bearer " + accessToken);
+				request.Headers = headers;
+
+				using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+				{
+					using (Stream stream = response.GetResponseStream())
+					{
+						StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+						String responseString = reader.ReadToEnd();
+						JObject jsonResponse = JObject.Parse(responseString);
+
+						IEnumerable<QvxDataRow> rows = jsonResponse["factMap"].First.First["rows"].Values<JObject>().Select(
+							dr => {
+								QvxDataRow row = new QvxDataRow();
+								for (int i = 0; i < fields.Length; i++)
+								{
+									row[fields[i]] = dr.First.First.ElementAt(i)["label"].Value<string>();
+								}
+								return row;
+							}
+						);
+
+						return rows;
+					}
+				}
+			});
+
+        }
+    }
 }
