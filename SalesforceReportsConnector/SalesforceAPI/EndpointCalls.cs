@@ -41,9 +41,16 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						}
 					}
 					connection.MParameters[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN] = newAccessToken;
-					TempLogger.Log("Access token:");
-					TempLogger.Log(newAccessToken);
-					return endpointCall(newAccessToken);
+					//TempLogger.Log("Access token:");
+					//TempLogger.Log(newAccessToken);
+					try
+					{
+						return endpointCall(newAccessToken);
+					}
+					catch
+					{
+						return default(T);
+					}
 				}
 				else
 				{
@@ -144,7 +151,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 				else
 				{
 					request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
-						"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Folder WHERE Type = 'Report' AND Name = '{0}' ORDER BY Name", databaseName)));
+						"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + string.Format("/query?q=SELECT Id,Name FROM Folder WHERE Type = 'Report' AND Name = '{0}' ORDER BY Name", Uri.EscapeDataString(databaseName))));
 					request.Method = "GET";
 					headers = new WebHeaderCollection();
 					headers.Add("Authorization", "Bearer " + accessToken);
@@ -230,7 +237,6 @@ namespace SalesforceReportsConnector.SalesforceAPI
 
 		public static IDictionary<string, Type> GetFieldsFromReport(QvxConnection connection, string reportID)
 		{
-			TempLogger.Log("Report ID: " + reportID);
 			IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
 			if (connectionParams == null)
 			{

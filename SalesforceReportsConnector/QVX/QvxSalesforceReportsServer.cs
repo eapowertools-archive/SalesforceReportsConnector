@@ -22,7 +22,6 @@ namespace SalesforceReportsConnector.QVX
 
 		public override string HandleJsonRequest(string method, string[] userParameters, QvxConnection connection)
 		{
-            TempLogger.Log("logging stuff.");
 			if (method.StartsWith("API-"))
 			{
 				return HandleAPIRequests(method, userParameters, connection);
