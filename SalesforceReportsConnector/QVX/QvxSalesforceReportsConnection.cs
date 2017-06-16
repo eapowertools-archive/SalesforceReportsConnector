@@ -78,7 +78,7 @@ namespace SalesforceReportsConnector.QVX
 		private static List<QvxTable> BuildTablesAsync(QvxConnection connection, IDictionary<string, string> tableDictionary)
 		{
 			int index = 0;
-			int concurrentTables = 15;
+			int concurrentTables = 20;
 			if (tableDictionary.Count < concurrentTables)
 			{
 				concurrentTables = tableDictionary.Count;
