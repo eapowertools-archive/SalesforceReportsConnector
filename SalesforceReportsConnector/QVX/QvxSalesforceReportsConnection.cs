@@ -7,6 +7,8 @@ using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 using Microsoft.SqlServer.TransactSql.ScriptDom;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace SalesforceReportsConnector.QVX
 {
@@ -38,31 +40,111 @@ namespace SalesforceReportsConnector.QVX
 				return tables;
 			}
 
-            IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(this, folder_name);
+			IDictionary<string, string> tableDictionary = EndpointCalls.GetTableNameList(this, folder_name);
 
+			List<QvxTable> newTables = BuildTablesAsync(this, tableDictionary);
+			//List<QvxTable> newTables = BuildTablesSync(this, tableDictionary);
 
-            List<QvxTable> newTables = new List<QvxTable>(tableDictionary.Select(table =>
-            {
-                TempLogger.Log("Adding table " + table.Key);
-                QvxField[] fields = GetFields(this, table.Key);
-                QvxTable.GetRowsHandler handler = () => { return GetData(this, fields, table.Key); };
-                return new QvxTable()
-                {
-                    TableName = table.Value,
-                    Fields = fields,
-                    GetRows = handler
-                };
-            })
-            );
-
-            return newTables;
+			return newTables;
 		}
 
-        private static QvxField[] GetFields(QvxConnection connection, string tableID)
+		private static List<QvxTable> BuildTablesSync(QvxConnection connection, IDictionary<string, string> tableDictionary)
+		{
+			List<QvxTable> newTables = new List<QvxTable>(tableDictionary.Select(table =>
+			{
+				QvxField[] fields = GetFields(connection, table.Key);
+				if (fields.Length == 0)
+				{
+					return new QvxTable()
+					{
+						TableName = "---invalid---",
+						Fields = fields,
+						GetRows = null
+					};
+				}
+				QvxTable.GetRowsHandler handler = () => { return GetData(connection, fields, table.Key); };
+				return new QvxTable()
+				{
+					TableName = table.Value,
+					Fields = fields,
+					GetRows = handler
+				};
+			}).Where(t => t.TableName != "---invalid---" && t.Fields.Length != 0)
+			);
+
+			return newTables;
+		}
+
+		private static List<QvxTable> BuildTablesAsync(QvxConnection connection, IDictionary<string, string> tableDictionary)
+		{
+			int index = 0;
+			int concurrentTables = 20;
+			if (tableDictionary.Count < concurrentTables)
+			{
+				concurrentTables = tableDictionary.Count;
+			}
+			List<QvxTable> newTables = new List<QvxTable>();
+
+			Task<QvxTable>[] taskArray = new Task<QvxTable>[concurrentTables];
+			for (int i = 0; i < concurrentTables; i++)
+			{
+				string key = tableDictionary.ElementAt(index).Key;
+				string value = tableDictionary.ElementAt(index).Value;
+				taskArray[i] = Task<QvxTable>.Factory.StartNew(() => BuildSingleTable(connection, key, value));
+				index++;
+			}
+
+			while (index < (tableDictionary.Count))
+			{
+				int taskIndex = Task.WaitAny(taskArray);
+				newTables.Add(taskArray[taskIndex].Result);
+				string key = tableDictionary.ElementAt(index).Key;
+				string value = tableDictionary.ElementAt(index).Value;
+				taskArray[taskIndex] = Task<QvxTable>.Factory.StartNew(() => BuildSingleTable(connection, key, value));
+				index++;
+			}
+			
+			foreach(Task<QvxTable> t in taskArray)
+			{
+				if (!t.IsCompleted)
+				{
+					t.Wait();
+				}
+
+				newTables.Add(t.Result);
+			}
+
+			return newTables.Where(t => t.TableName != "---invalid---" && t.Fields.Length != 0).ToList();
+		}
+
+		private static QvxTable BuildSingleTable(QvxConnection connection, string tableID, string tableName)
+		{
+			QvxField[] fields = GetFields(connection, tableID);
+			if (fields.Length == 0)
+			{
+				return new QvxTable()
+				{
+					TableName = "---invalid---",
+					Fields = fields,
+					GetRows = null
+				};
+			}
+			QvxTable.GetRowsHandler handler = () => { return GetData(connection, fields, tableID); };
+			return new QvxTable()
+			{
+				TableName = tableName,
+				Fields = fields,
+				GetRows = handler
+			};
+		}
+
+		private static QvxField[] GetFields(QvxConnection connection, string tableID)
         {
-            TempLogger.Log("Getting fields for: " + tableID);
             IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
-            TempLogger.Log("Got fields.");
+			if (fields == default(IDictionary<string, Type>))
+			{
+				return new QvxField[0];
+			}
 
             QvxField[] qvxFields = fields.Select(f => new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)).ToArray();
 
