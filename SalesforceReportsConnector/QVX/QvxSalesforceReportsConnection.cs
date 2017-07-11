@@ -146,7 +146,31 @@ namespace SalesforceReportsConnector.QVX
 				return new QvxField[0];
 			}
 
-            QvxField[] qvxFields = fields.Select(f => new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)).ToArray();
+            QvxField[] qvxFields = fields.Select(f => {
+                QvxField newField = null;
+                if (f.Value == typeof(string))
+                {
+                    newField = new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII);
+                }
+				else if (f.Value == typeof(int) || f.Value == typeof(bool))
+				{
+					newField = new QvxField(f.Key, QvxFieldType.QVX_SIGNED_INTEGER, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.INTEGER);
+				}
+				else if (f.Value == typeof(float) || f.Value == typeof(double))
+				{
+					newField = new QvxField(f.Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.REAL);
+				}
+				else if (f.Value == typeof(DateTime))
+				{
+					newField = new QvxField(f.Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.TIMESTAMP);
+				}
+				else
+				{
+					newField = new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldAttrType.ASCII);
+				}
+
+                return newField;
+                }).ToArray();
 
             return qvxFields;
         }
