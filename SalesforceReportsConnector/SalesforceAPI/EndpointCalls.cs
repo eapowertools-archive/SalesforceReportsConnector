@@ -262,8 +262,32 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						JObject jsonResponse = JObject.Parse(responseString);
 
 						JToken columnArray = jsonResponse["reportExtendedMetadata"]["detailColumnInfo"];
-						IDictionary<string, Type> columns = columnArray.ToDictionary(c => c.First["label"].Value<string>(), t => (t.First["dataType"].Value<string>() == "int") ? typeof(int) : typeof(string));
-
+						IDictionary<string, Type> columns = columnArray.ToDictionary(c => c.First["label"].Value<string>(), t => {
+							Type columnType = null;
+							switch (t.First["dataType"].Value<string>())
+							{
+								case "string":
+									columnType = typeof(string);
+									break;
+								case "int":
+									columnType = typeof(int);
+									break;
+								case "double":
+									columnType = typeof(double);
+									break;
+								case "boolean":
+									columnType = typeof(bool);
+									break;
+								//case "date":
+								//case "datetime":
+								//	columnType = typeof(DateTime);
+								//	break;
+								default:
+									columnType = typeof(string);
+									break;
+							}
+							return columnType;
+							});
 						return columns;
 
 					}
