@@ -22,15 +22,15 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			}
 			catch (WebException e)
 			{
-				if (((HttpWebResponse) e.Response).StatusCode == HttpStatusCode.Unauthorized || ((HttpWebResponse) e.Response).StatusCode == HttpStatusCode.Forbidden)
+				if (((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.Unauthorized || ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.Forbidden)
 				{
 					Uri authHostnameUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_AUTHHOST]);
 					string newTokenPath = string.Format("/services/oauth2/token?grant_type=refresh_token&client_id={0}&refresh_token={1}", QvxSalesforceConnectionInfo.CLIENT_ID, connectionParams[QvxSalesforceConnectionInfo.CONNECTION_REFRESH_TOKEN]);
-					HttpWebRequest newTokenRequest = (HttpWebRequest) HttpWebRequest.Create(new Uri(authHostnameUri, newTokenPath));
+					HttpWebRequest newTokenRequest = (HttpWebRequest)HttpWebRequest.Create(new Uri(authHostnameUri, newTokenPath));
 					newTokenRequest.Method = "POST";
 
 					string newAccessToken = connectionParams[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN];
-					using (HttpWebResponse newTokenResponse = (HttpWebResponse) newTokenRequest.GetResponse())
+					using (HttpWebResponse newTokenResponse = (HttpWebResponse)newTokenRequest.GetResponse())
 					{
 						using (Stream stream = newTokenResponse.GetResponseStream())
 						{
@@ -74,13 +74,13 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			return ValidateAccessTokenAndPerformRequest<string>(connection, connectionValues, (token) =>
 			{
 				Uri idURI = new Uri(idURL);
-				HttpWebRequest request = (HttpWebRequest) WebRequest.Create(idURI);
+				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(idURI);
 				request.Method = "GET";
 				WebHeaderCollection headers = new WebHeaderCollection();
 				headers.Add("Authorization", "Bearer " + token);
 				request.Headers = headers;
 
-				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
+				using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
 				{
 					using (Stream stream = response.GetResponseStream())
 					{
@@ -105,14 +105,14 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			return ValidateAccessTokenAndPerformRequest<IEnumerable<string>>(connection, connectionParams, (accessToken) =>
 			{
 				Uri hostUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_HOST]);
-				HttpWebRequest request = (HttpWebRequest) WebRequest.Create(new Uri(hostUri,
+				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
 					"/services/data/" + QvxSalesforceConnectionInfo.SALESFORCE_API_VERSION + "/query?q=SELECT Name FROM Folder WHERE Type = 'Report' ORDER BY Name"));
 				request.Method = "GET";
 				WebHeaderCollection headers = new WebHeaderCollection();
 				headers.Add("Authorization", "Bearer " + accessToken);
 				request.Headers = headers;
 
-				using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
+				using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
 				{
 					using (Stream stream = response.GetResponseStream())
 					{
@@ -121,11 +121,11 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						JObject jsonResponse = JObject.Parse(responseString);
 						IEnumerable<JObject> folders = jsonResponse["records"].Values<JObject>();
 						folders = folders.Where(x => !string.IsNullOrEmpty(x["Name"].Value<string>()) && x["Name"].Value<string>() != "*");
-                        IList<string> folderNames = folders.Select(f => f["Name"].Value<string>()).ToList();
-                        folderNames.Insert(0, "Private Reports");
-                        folderNames.Insert(0, "Public Reports");
-                        return folderNames;
-                    }
+						IList<string> folderNames = folders.Select(f => f["Name"].Value<string>()).ToList();
+						folderNames.Insert(0, "Private Reports");
+						folderNames.Insert(0, "Public Reports");
+						return folderNames;
+					}
 				}
 			});
 		}
@@ -192,7 +192,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 					headers.Add("Authorization", "Bearer " + newAccessToken);
 					request.Headers = headers;
 
-					using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
+					using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
 					{
 						using (Stream stream = response.GetResponseStream())
 						{
@@ -262,7 +262,8 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						JObject jsonResponse = JObject.Parse(responseString);
 
 						JToken columnArray = jsonResponse["reportExtendedMetadata"]["detailColumnInfo"];
-						IDictionary<string, Type> columns = columnArray.ToDictionary(c => c.First["label"].Value<string>(), t => {
+						IDictionary<string, Type> columns = columnArray.ToDictionary(c => c.First["label"].Value<string>(), t =>
+						{
 							Type columnType = null;
 							switch (t.First["dataType"].Value<string>())
 							{
@@ -275,9 +276,12 @@ namespace SalesforceReportsConnector.SalesforceAPI
 								case "double":
 									columnType = typeof(double);
 									break;
-								case "boolean":
-									columnType = typeof(bool);
-									break;
+								//case "boolean":
+								//	columnType = typeof(bool);
+								//	break;
+								//case "percent":
+								//    columnType = typeof(double);
+								//    break;
 								//case "date":
 								//case "datetime":
 								//	columnType = typeof(DateTime);
@@ -287,7 +291,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 									break;
 							}
 							return columnType;
-							});
+						});
 						return columns;
 
 					}
@@ -295,13 +299,13 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			});
 		}
 
-        public static IEnumerable<QvxDataRow> GetReportData(QvxConnection connection, QvxField[] fields, string reportID)
-        {
-            IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
-            if (connectionParams == null)
-            {
-                return new List<QvxDataRow>();
-            }
+		public static IEnumerable<QvxDataRow> GetReportData(QvxConnection connection, QvxField[] fields, string reportID)
+		{
+			IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
+			if (connectionParams == null)
+			{
+				return new List<QvxDataRow>();
+			}
 
 			return ValidateAccessTokenAndPerformRequest<IEnumerable<QvxDataRow>>(connection, connectionParams, (accessToken) =>
 			{
@@ -322,21 +326,31 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						JObject jsonResponse = JObject.Parse(responseString);
 
 						IEnumerable<QvxDataRow> rows = jsonResponse["factMap"].First.First["rows"].Values<JObject>().Select(
-							dr => {
-								QvxDataRow row = new QvxDataRow();
-								for (int i = 0; i < fields.Length; i++)
+						dr =>
+						{
+							QvxDataRow row = new QvxDataRow();
+							for (int i = 0; i < fields.Length; i++)
+							{
+								if (fields[i].Type == QvxFieldType.QVX_IEEE_REAL)
+								{
+									row[fields[i]] = dr.First.First.ElementAt(i)["value"].Value<double>();
+								}
+								if (fields[i].Type == QvxFieldType.QVX_SIGNED_INTEGER)
+								{
+									row[fields[i]] = dr.First.First.ElementAt(i)["value"].Value<int>();
+								}
+								else
 								{
 									row[fields[i]] = dr.First.First.ElementAt(i)["label"].Value<string>();
 								}
-								return row;
 							}
-						);
-
+							return row;
+						});
 						return rows;
 					}
 				}
 			});
 
-        }
-    }
+		}
+	}
 }

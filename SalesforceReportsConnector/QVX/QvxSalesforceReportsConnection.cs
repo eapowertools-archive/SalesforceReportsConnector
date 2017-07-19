@@ -6,9 +6,7 @@ using QlikView.Qvx.QvxLibrary;
 using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 using Microsoft.SqlServer.TransactSql.ScriptDom;
-using System.Diagnostics;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
 
 namespace SalesforceReportsConnector.QVX
 {
@@ -48,19 +46,14 @@ namespace SalesforceReportsConnector.QVX
 			return newTables;
 		}
 
-		private static List<QvxTable> BuildTablesSync(QvxConnection connection, IDictionary<string, string> tableDictionary)
+		private List<QvxTable> BuildTablesSync(QvxConnection connection, IDictionary<string, string> tableDictionary)
 		{
 			List<QvxTable> newTables = new List<QvxTable>(tableDictionary.Select(table =>
 			{
 				QvxField[] fields = GetFields(connection, table.Key);
 				if (fields.Length == 0)
 				{
-					return new QvxTable()
-					{
-						TableName = "---invalid---",
-						Fields = fields,
-						GetRows = null
-					};
+					return null;
 				}
 				QvxTable.GetRowsHandler handler = () => { return GetData(connection, fields, table.Key); };
 				return new QvxTable()
@@ -69,13 +62,13 @@ namespace SalesforceReportsConnector.QVX
 					Fields = fields,
 					GetRows = handler
 				};
-			}).Where(t => t.TableName != "---invalid---" && t.Fields.Length != 0)
+			}).Where(t => t != null && t.Fields.Length != 0)
 			);
 
 			return newTables;
 		}
 
-		private static List<QvxTable> BuildTablesAsync(QvxConnection connection, IDictionary<string, string> tableDictionary)
+		private List<QvxTable> BuildTablesAsync(QvxConnection connection, IDictionary<string, string> tableDictionary)
 		{
 			int index = 0;
 			int concurrentTables = 20;
@@ -103,8 +96,8 @@ namespace SalesforceReportsConnector.QVX
 				taskArray[taskIndex] = Task<QvxTable>.Factory.StartNew(() => BuildSingleTable(connection, key, value));
 				index++;
 			}
-			
-			foreach(Task<QvxTable> t in taskArray)
+
+			foreach (Task<QvxTable> t in taskArray)
 			{
 				if (!t.IsCompleted)
 				{
@@ -114,20 +107,15 @@ namespace SalesforceReportsConnector.QVX
 				newTables.Add(t.Result);
 			}
 
-			return newTables.Where(t => t.TableName != "---invalid---" && t.Fields.Length != 0).ToList();
+			return newTables.Where(t => t != null && t.Fields.Length != 0).ToList();
 		}
 
-		private static QvxTable BuildSingleTable(QvxConnection connection, string tableID, string tableName)
+		private QvxTable BuildSingleTable(QvxConnection connection, string tableID, string tableName)
 		{
 			QvxField[] fields = GetFields(connection, tableID);
 			if (fields.Length == 0)
 			{
-				return new QvxTable()
-				{
-					TableName = "---invalid---",
-					Fields = fields,
-					GetRows = null
-				};
+				return null;
 			}
 			QvxTable.GetRowsHandler handler = () => { return GetData(connection, fields, tableID); };
 			return new QvxTable()
@@ -138,52 +126,50 @@ namespace SalesforceReportsConnector.QVX
 			};
 		}
 
-		private static QvxField[] GetFields(QvxConnection connection, string tableID)
-        {
-            IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
+		private QvxField[] GetFields(QvxConnection connection, string tableID)
+		{
+			IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
 			if (fields == default(IDictionary<string, Type>))
 			{
 				return new QvxField[0];
 			}
 
-            QvxField[] qvxFields = fields.Select(f => {
-                QvxField newField = null;
-                if (f.Value == typeof(string))
-                {
-                    newField = new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII);
-                }
-				else if (f.Value == typeof(int) || f.Value == typeof(bool))
+			QvxField[] qvxFields = new QvxField[fields.Count];
+
+			for (int i = 0; i < fields.Count; i++)
+			{
+				if (fields.ElementAt(i).Value == typeof(string))
 				{
-					newField = new QvxField(f.Key, QvxFieldType.QVX_SIGNED_INTEGER, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.INTEGER);
+					qvxFields[i] = new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII);
 				}
-				else if (f.Value == typeof(float) || f.Value == typeof(double))
+				else if (fields.ElementAt(i).Value == typeof(int) || fields.ElementAt(i).Value == typeof(bool))
 				{
-					newField = new QvxField(f.Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.REAL);
+					qvxFields[i] = new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_SIGNED_INTEGER, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.INTEGER);
 				}
-				else if (f.Value == typeof(DateTime))
+				else if (fields.ElementAt(i).Value == typeof(float) || fields.ElementAt(i).Value == typeof(double))
 				{
-					newField = new QvxField(f.Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.TIMESTAMP);
+					qvxFields[i] = new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.REAL);
+				}
+				else if (fields.ElementAt(i).Value == typeof(DateTime))
+				{
+					qvxFields[i] = new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.TIMESTAMP);
 				}
 				else
 				{
-					newField = new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldAttrType.ASCII);
+					qvxFields[i] = new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldAttrType.ASCII);
 				}
+			}
 
-                return newField;
-                }).ToArray();
+			return qvxFields;
+		}
 
-            return qvxFields;
-        }
+		private IEnumerable<QvxDataRow> GetData(QvxConnection connection, QvxField[] fields, string reportID)
+		{
+			IEnumerable<QvxDataRow> rows = EndpointCalls.GetReportData(connection, fields, reportID);
+			return rows;
+		}
 
-        private static IEnumerable<QvxDataRow> GetData(QvxConnection connection, QvxField[] fields, string reportID)
-        {
-
-            IEnumerable<QvxDataRow> rows = EndpointCalls.GetReportData(connection, fields, reportID);
-
-            return rows;
-        }
-
-        public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
+		public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
 		{
 			QvxDataTable returnTable = null;
 
