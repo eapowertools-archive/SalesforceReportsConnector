@@ -50,8 +50,8 @@ namespace SalesforceReportsConnector.QVX
 		{
 			List<QvxTable> newTables = new List<QvxTable>(tableDictionary.Select(table =>
 			{
-				QvxField[] fields = GetFields(connection, table.Key);
-				if (fields.Length == 0)
+				QvxFieldsWrapper fields = GetFields(connection, table.Key);
+				if (fields.GetLength() == 0)
 				{
 					return null;
 				}
@@ -59,7 +59,7 @@ namespace SalesforceReportsConnector.QVX
 				return new QvxTable()
 				{
 					TableName = table.Value,
-					Fields = fields,
+					Fields = fields.Fields,
 					GetRows = handler
 				};
 			}).Where(t => t != null && t.Fields.Length != 0)
@@ -112,8 +112,8 @@ namespace SalesforceReportsConnector.QVX
 
 		private QvxTable BuildSingleTable(QvxConnection connection, string tableID, string tableName)
 		{
-			QvxField[] fields = GetFields(connection, tableID);
-			if (fields.Length == 0)
+			QvxFieldsWrapper fields = GetFields(connection, tableID);
+			if (fields.GetLength() == 0)
 			{
 				return null;
 			}
@@ -121,49 +121,49 @@ namespace SalesforceReportsConnector.QVX
 			return new QvxTable()
 			{
 				TableName = tableName,
-				Fields = fields,
+				Fields = fields.Fields,
 				GetRows = handler
 			};
 		}
 
-		private QvxField[] GetFields(QvxConnection connection, string tableID)
+		private QvxFieldsWrapper GetFields(QvxConnection connection, string tableID)
 		{
 			IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
 			if (fields == default(IDictionary<string, Type>))
 			{
-				return new QvxField[0];
+				return new QvxFieldsWrapper(0);
 			}
 
-			QvxField[] qvxFields = new QvxField[fields.Count];
+			QvxFieldsWrapper qvxFields = new QvxFieldsWrapper(fields.Count);
 
 			for (int i = 0; i < fields.Count; i++)
 			{
 				if (fields.ElementAt(i).Value == typeof(string))
 				{
-					qvxFields[i] = new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII);
+					qvxFields.SetFieldValue(i, fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII);
 				}
 				else if (fields.ElementAt(i).Value == typeof(int) || fields.ElementAt(i).Value == typeof(bool))
 				{
-					qvxFields[i] = new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_SIGNED_INTEGER, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.INTEGER);
+					qvxFields.SetFieldValue(i, fields.ElementAt(i).Key, QvxFieldType.QVX_SIGNED_INTEGER, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.INTEGER);
 				}
 				else if (fields.ElementAt(i).Value == typeof(float) || fields.ElementAt(i).Value == typeof(double))
 				{
-					qvxFields[i] = new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.REAL);
+					qvxFields.SetFieldValue(i, fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.REAL);
 				}
 				else if (fields.ElementAt(i).Value == typeof(DateTime))
 				{
-					qvxFields[i] = new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.TIMESTAMP);
+					qvxFields.SetFieldValue(i, fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.TIMESTAMP);
 				}
 				else
 				{
-					qvxFields[i] = new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldAttrType.ASCII);
+					qvxFields.SetFieldValue(i, fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldAttrType.ASCII);
 				}
 			}
 
 			return qvxFields;
 		}
 
-		private IEnumerable<QvxDataRow> GetData(QvxConnection connection, QvxField[] fields, string reportID)
+		private IEnumerable<QvxDataRow> GetData(QvxConnection connection, QvxFieldsWrapper fields, string reportID)
 		{
 			IEnumerable<QvxDataRow> rows = EndpointCalls.GetReportData(connection, fields, reportID);
 			return rows;

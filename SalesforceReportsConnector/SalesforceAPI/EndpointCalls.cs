@@ -299,7 +299,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			});
 		}
 
-		public static IEnumerable<QvxDataRow> GetReportData(QvxConnection connection, QvxField[] fields, string reportID)
+		public static IEnumerable<QvxDataRow> GetReportData(QvxConnection connection, QvxFieldsWrapper fields, string reportID)
 		{
 			IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
 			if (connectionParams == null)
@@ -329,19 +329,19 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						dr =>
 						{
 							QvxDataRow row = new QvxDataRow();
-							for (int i = 0; i < fields.Length; i++)
+							for (int i = 0; i < fields.GetLength(); i++)
 							{
-								if (fields[i].Type == QvxFieldType.QVX_IEEE_REAL)
+								if (fields.GetFieldType(i) == FieldAttrType.REAL)
 								{
-									row[fields[i]] = dr.First.First.ElementAt(i)["value"].Value<double>();
+									row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<double>();
 								}
-								if (fields[i].Type == QvxFieldType.QVX_SIGNED_INTEGER)
+								if (fields.GetFieldType(i) == FieldAttrType.INTEGER)
 								{
-									row[fields[i]] = dr.First.First.ElementAt(i)["value"].Value<int>();
+									row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<int>();
 								}
 								else
 								{
-									row[fields[i]] = dr.First.First.ElementAt(i)["label"].Value<string>();
+									row[fields.GetField(i)] = dr.First.First.ElementAt(i)["label"].Value<string>();
 								}
 							}
 							return row;
