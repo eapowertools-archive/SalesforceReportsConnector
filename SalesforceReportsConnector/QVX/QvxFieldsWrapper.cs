@@ -6,24 +6,35 @@ using System.Text;
 
 namespace SalesforceReportsConnector.QVX
 {
+	public enum SalesforceDataType
+	{
+		String,
+		Integer,
+		Double,
+		Boolean,
+		Percent,
+		DateTime,
+		Currency
+	}
+
 	public class QvxFieldsWrapper
 	{
 		public QvxField[] Fields { get; private set; }
-		public FieldAttrType[] FieldTypes { get; private set; }
+		public SalesforceDataType[] FieldTypes { get; private set; }
 
 		public QvxFieldsWrapper(int numOfFields)
 		{
 			this.Fields = new QvxField[numOfFields];
-			this.FieldTypes = new FieldAttrType[numOfFields];
+			this.FieldTypes = new SalesforceDataType[numOfFields];
 		}
 
-		public void SetFieldValue(int index, string fieldName, QvxFieldType fieldType, QvxNullRepresentation nullRepresentation, FieldAttrType attribType)
+		public void SetFieldValue(int index, QvxField field, SalesforceDataType attribType)
 		{
-			Fields[index] = new QvxField(fieldName, fieldType, nullRepresentation, attribType);
+			Fields[index] = field;
 			FieldTypes[index] = attribType;
 		}
 
-		public FieldAttrType GetFieldType(int index)
+		public SalesforceDataType GetFieldType(int index)
 		{
 			return FieldTypes[index];
 		}

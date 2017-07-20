@@ -128,7 +128,7 @@ namespace SalesforceReportsConnector.QVX
 
 		private QvxFieldsWrapper GetFields(QvxConnection connection, string tableID)
 		{
-			IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
+			IDictionary<string, SalesforceDataType> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
 			if (fields == default(IDictionary<string, Type>))
 			{
 				return new QvxFieldsWrapper(0);
@@ -138,25 +138,25 @@ namespace SalesforceReportsConnector.QVX
 
 			for (int i = 0; i < fields.Count; i++)
 			{
-				if (fields.ElementAt(i).Value == typeof(string))
+				if (fields.ElementAt(i).Value == SalesforceDataType.String)
 				{
-					qvxFields.SetFieldValue(i, fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII);
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII), fields.ElementAt(i).Value);
 				}
-				else if (fields.ElementAt(i).Value == typeof(int) || fields.ElementAt(i).Value == typeof(bool))
+				else if (fields.ElementAt(i).Value == SalesforceDataType.Integer || fields.ElementAt(i).Value == SalesforceDataType.Boolean)
 				{
-					qvxFields.SetFieldValue(i, fields.ElementAt(i).Key, QvxFieldType.QVX_SIGNED_INTEGER, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.INTEGER);
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_SIGNED_INTEGER, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.INTEGER), fields.ElementAt(i).Value);
+		}
+				else if (fields.ElementAt(i).Value == SalesforceDataType.Double || fields.ElementAt(i).Value == SalesforceDataType.Currency || fields.ElementAt(i).Value == SalesforceDataType.Percent)
+				{
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.REAL), fields.ElementAt(i).Value);
 				}
-				else if (fields.ElementAt(i).Value == typeof(float) || fields.ElementAt(i).Value == typeof(double))
+				else if (fields.ElementAt(i).Value == SalesforceDataType.DateTime)
 				{
-					qvxFields.SetFieldValue(i, fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.REAL);
-				}
-				else if (fields.ElementAt(i).Value == typeof(DateTime))
-				{
-					qvxFields.SetFieldValue(i, fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.TIMESTAMP);
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.TIMESTAMP), fields.ElementAt(i).Value);
 				}
 				else
 				{
-					qvxFields.SetFieldValue(i, fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldAttrType.ASCII);
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldAttrType.ASCII), fields.ElementAt(i).Value);
 				}
 			}
 

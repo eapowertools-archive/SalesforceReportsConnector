@@ -41,8 +41,8 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						}
 					}
 					connection.MParameters[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN] = newAccessToken;
-					//TempLogger.Log("Access token:");
-					//TempLogger.Log(newAccessToken);
+					TempLogger.Log("Access token:");
+					TempLogger.Log(newAccessToken);
 					try
 					{
 						return endpointCall(newAccessToken);
@@ -235,15 +235,15 @@ namespace SalesforceReportsConnector.SalesforceAPI
 			return connectionValues;
 		}
 
-		public static IDictionary<string, Type> GetFieldsFromReport(QvxConnection connection, string reportID)
+		public static IDictionary<string, SalesforceDataType> GetFieldsFromReport(QvxConnection connection, string reportID)
 		{
 			IDictionary<string, string> connectionParams = GetParamsFromConnection(connection);
 			if (connectionParams == null)
 			{
-				return new Dictionary<string, Type>();
+				return new Dictionary<string, SalesforceDataType>();
 			}
 
-			return ValidateAccessTokenAndPerformRequest<IDictionary<string, Type>>(connection, connectionParams, (accessToken) =>
+			return ValidateAccessTokenAndPerformRequest<IDictionary<string, SalesforceDataType>>(connection, connectionParams, (accessToken) =>
 			{
 				Uri hostUri = new Uri(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_HOST]);
 				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(hostUri,
@@ -262,32 +262,32 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						JObject jsonResponse = JObject.Parse(responseString);
 
 						JToken columnArray = jsonResponse["reportExtendedMetadata"]["detailColumnInfo"];
-						IDictionary<string, Type> columns = columnArray.ToDictionary(c => c.First["label"].Value<string>(), t =>
+						IDictionary<string, SalesforceDataType> columns = columnArray.ToDictionary(c => c.First["label"].Value<string>(), t =>
 						{
-							Type columnType = null;
+							SalesforceDataType columnType = SalesforceDataType.String;
 							switch (t.First["dataType"].Value<string>())
 							{
 								case "string":
-									columnType = typeof(string);
+									columnType = SalesforceDataType.String;
 									break;
 								case "int":
-									columnType = typeof(int);
+									columnType = SalesforceDataType.Integer;
 									break;
-								case "double":
-									columnType = typeof(double);
-									break;
-								//case "boolean":
-								//	columnType = typeof(bool);
+								//case "double":
+								//	columnType = SalesforceDataType.Double;
 								//	break;
-								//case "percent":
-								//    columnType = typeof(double);
-								//    break;
+								//case "boolean":
+								//	columnType = SalesforceDataType.Boolean;
+								//	break;
+								case "percent":
+									columnType = SalesforceDataType.Percent;
+									break;
 								//case "date":
 								//case "datetime":
-								//	columnType = typeof(DateTime);
+								//	columnType = SalesforceDataType.DateTime;
 								//	break;
-								default:
-									columnType = typeof(string);
+								case "currency":
+									columnType = SalesforceDataType.Currency;
 									break;
 							}
 							return columnType;
@@ -331,13 +331,25 @@ namespace SalesforceReportsConnector.SalesforceAPI
 							QvxDataRow row = new QvxDataRow();
 							for (int i = 0; i < fields.GetLength(); i++)
 							{
-								if (fields.GetFieldType(i) == FieldAttrType.REAL)
+								if (fields.GetFieldType(i) == SalesforceDataType.Double || fields.GetFieldType(i) == SalesforceDataType.Percent)
 								{
 									row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<double>();
 								}
-								if (fields.GetFieldType(i) == FieldAttrType.INTEGER)
+								else if (fields.GetFieldType(i) == SalesforceDataType.Integer)
 								{
 									row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<int>();
+								}
+								else if (fields.GetFieldType(i) == SalesforceDataType.Currency)
+								{
+									if (dr.First.First.ElementAt(i)["value"].HasValues)
+									{
+										row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<double>("amount");
+
+									}
+									else
+									{
+										row[fields.GetField(i)] = null;
+									}
 								}
 								else
 								{
