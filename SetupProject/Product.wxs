@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="Salesforce Reports Connector" Language="1033" Version="1.0.0.0" Manufacturer="EA Powertools" UpgradeCode="1a59629a-dfcd-44be-aa1b-2096b095d7a3">
+    <Package Platform="x64" InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+
+
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="CommonFiles64Folder">
+        <Directory Id="CommonFilesHK" Name="Qlik">
+          <Directory Id="CustomData" Name="Custom Data">
+            <Directory Id="INSTALLDIR" Name="SalesforceReportsConnector">
+              <Component Id="INSTALLDIR_comp" Guid="4201ffd0-1296-4f9a-a1f4-6d89d42d1179" Win64="yes">
+                <CreateFolder />
+                <RemoveFile Id="RemoveFilesFromAppDirectory" Name="*.*" On="uninstall" />
+              </Component>
+
+              <!-- Main program file -->
+              <Component Id="SalesforceReportsConnector.exe_comp" Guid="*" Win64="yes">
+                <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\SalesforceReportsConnector.exe" Id="SalesforceReportsConnectorExe" KeyPath="yes" />
+              </Component>
+
+              <!-- Dll files -->
+              <Component Id="QvxLibrary.dll_comp" Guid="d1e802f4-4cc9-465c-9647-907b68e8fe29" Win64="yes">
+                <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\QvxLibrary.dll" Id="qvxLibraryDll" KeyPath="yes" />
+              </Component>
+
+              <Component Id="Newtonsoft.Json.dll_comp" Guid="239a13ba-313e-4ec4-b2a2-27675bb05df7" Win64="yes">
+                <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\Newtonsoft.Json.dll" Id="newtonsoftJsonDll" KeyPath="yes" />
+              </Component>
+
+              <Component Id="Microsoft.SqlServer.TransactSql.ScriptDom.dll_comp" Guid="871c0b76-b01b-44f0-8fdf-3bee7c5d7012" Win64="yes">
+                <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\Microsoft.SqlServer.TransactSql.ScriptDom.dll" Id="microsoftScriptDomDll" KeyPath="yes" />
+              </Component>
+              
+              <Directory Id="INSTALLWEBSUBDIR" Name="web">
+                <Component Id="connectdialog.css_comp" Guid="cf004a9d-e8b5-427b-8b8b-095d18c03ca5" Win64="yes">
+                  <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\web\connectdialog.css" Id="connectDialogCss" KeyPath="yes" />
+                </Component>
+
+                <Component Id="connectdialog.js_comp" Guid="d5e8ec9f-456b-4aab-ab04-14d4f127966f" Win64="yes">
+                  <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\web\connectdialog.js" Id="connectDialogJs" KeyPath="yes" />
+                </Component>
+
+                <Component Id="connectdialog.ng.html_comp" Guid="942e4e03-0a52-4a58-bbbe-19fa1056aee7" Win64="yes">
+                  <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\web\connectdialog.ng.html" Id="connectDialogNgHtml" KeyPath="yes" />
+                </Component>
+
+                <Component Id="salesforcelogindialog.css_comp" Guid="55634ea0-ae59-44ce-b954-482b91933c83" Win64="yes">
+                  <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\web\salesforcelogindialog.css" Id="salesforceLoginDialogCss" KeyPath="yes" />
+                </Component>
+
+                <Component Id="salesforcelogindialog.js_comp" Guid="08e1b74c-6a2f-4839-a5bb-988e36a354d9" Win64="yes">
+                  <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\web\salesforcelogindialog.js" Id="salesforceLoginDialogJs" KeyPath="yes" />
+                </Component>
+
+                <Component Id="salesforcelogindialog.ng.html_comp" Guid="02895059-8eaf-4028-9ab5-d302466820e4" Win64="yes">
+                  <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\web\salesforcelogindialog.ng.html" Id="salesforceLoginDialogNgHtml" KeyPath="yes" />
+                </Component>
+
+                <Component Id="selectdialog.js_comp" Guid="c2bad6e4-a5c0-4038-9f5c-3748d29e550d" Win64="yes">
+                  <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\web\selectdialog.js" Id="selectDialogJs" KeyPath="yes" />
+                </Component>
+              </Directory>
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <Feature Id="Complete" Title="Salesforce Reports Connector" Description="A Salesforce Reports QVX Connector" Display="expand" Level="1" ConfigurableDirectory="INSTALLDIR">
+
+      <!-- A feature block for the main (GUI) program and all its dependencies -->
+      <Feature Id="MainProgram" Title="Salesforce Reports QVX Connector" Description="A Salesforce Reports QVX Connector" Level="1">
+        <ComponentRef Id="INSTALLDIR_comp" />
+        <ComponentRef Id="SalesforceReportsConnector.exe_comp" />
+        <ComponentRef Id="QvxLibrary.dll_comp" />
+        <ComponentRef Id="Newtonsoft.Json.dll_comp" />
+        <ComponentRef Id="Microsoft.SqlServer.TransactSql.ScriptDom.dll_comp" />
+
+        <ComponentRef Id="connectdialog.css_comp" />
+        <ComponentRef Id="connectdialog.js_comp" />
+        <ComponentRef Id="connectdialog.ng.html_comp" />
+        <ComponentRef Id="salesforcelogindialog.css_comp" />
+        <ComponentRef Id="salesforcelogindialog.js_comp" />
+        <ComponentRef Id="salesforcelogindialog.ng.html_comp" />
+        <ComponentRef Id="selectdialog.js_comp" />
+                      
+        <!-- Registry entries -->
+        <!--<ComponentRef Id="RegValInstallLocation_comp" />-->
+      </Feature>
+    </Feature>
+
+
+  </Product>
+</Wix>

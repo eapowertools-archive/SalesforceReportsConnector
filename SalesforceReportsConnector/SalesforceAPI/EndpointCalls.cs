@@ -57,7 +57,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 					throw new Exception("Invalid Web Response");
 				}
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 				return default(T);
 			}
