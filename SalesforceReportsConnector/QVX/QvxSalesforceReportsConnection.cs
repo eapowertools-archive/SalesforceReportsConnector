@@ -6,9 +6,7 @@ using QlikView.Qvx.QvxLibrary;
 using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 using Microsoft.SqlServer.TransactSql.ScriptDom;
-using System.Diagnostics;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
 
 namespace SalesforceReportsConnector.QVX
 {
@@ -48,34 +46,29 @@ namespace SalesforceReportsConnector.QVX
 			return newTables;
 		}
 
-		private static List<QvxTable> BuildTablesSync(QvxConnection connection, IDictionary<string, string> tableDictionary)
+		private List<QvxTable> BuildTablesSync(QvxConnection connection, IDictionary<string, string> tableDictionary)
 		{
 			List<QvxTable> newTables = new List<QvxTable>(tableDictionary.Select(table =>
 			{
-				QvxField[] fields = GetFields(connection, table.Key);
-				if (fields.Length == 0)
+				QvxFieldsWrapper fields = GetFields(connection, table.Key);
+				if (fields.GetLength() == 0)
 				{
-					return new QvxTable()
-					{
-						TableName = "---invalid---",
-						Fields = fields,
-						GetRows = null
-					};
+					return null;
 				}
 				QvxTable.GetRowsHandler handler = () => { return GetData(connection, fields, table.Key); };
 				return new QvxTable()
 				{
 					TableName = table.Value,
-					Fields = fields,
+					Fields = fields.Fields,
 					GetRows = handler
 				};
-			}).Where(t => t.TableName != "---invalid---" && t.Fields.Length != 0)
+			}).Where(t => t != null && t.Fields.Length != 0)
 			);
 
 			return newTables;
 		}
 
-		private static List<QvxTable> BuildTablesAsync(QvxConnection connection, IDictionary<string, string> tableDictionary)
+		private List<QvxTable> BuildTablesAsync(QvxConnection connection, IDictionary<string, string> tableDictionary)
 		{
 			int index = 0;
 			int concurrentTables = 20;
@@ -103,8 +96,8 @@ namespace SalesforceReportsConnector.QVX
 				taskArray[taskIndex] = Task<QvxTable>.Factory.StartNew(() => BuildSingleTable(connection, key, value));
 				index++;
 			}
-			
-			foreach(Task<QvxTable> t in taskArray)
+
+			foreach (Task<QvxTable> t in taskArray)
 			{
 				if (!t.IsCompleted)
 				{
@@ -114,52 +107,69 @@ namespace SalesforceReportsConnector.QVX
 				newTables.Add(t.Result);
 			}
 
-			return newTables.Where(t => t.TableName != "---invalid---" && t.Fields.Length != 0).ToList();
+			return newTables.Where(t => t != null && t.Fields.Length != 0).ToList();
 		}
 
-		private static QvxTable BuildSingleTable(QvxConnection connection, string tableID, string tableName)
+		private QvxTable BuildSingleTable(QvxConnection connection, string tableID, string tableName)
 		{
-			QvxField[] fields = GetFields(connection, tableID);
-			if (fields.Length == 0)
+			QvxFieldsWrapper fields = GetFields(connection, tableID);
+			if (fields.GetLength() == 0)
 			{
-				return new QvxTable()
-				{
-					TableName = "---invalid---",
-					Fields = fields,
-					GetRows = null
-				};
+				return null;
 			}
 			QvxTable.GetRowsHandler handler = () => { return GetData(connection, fields, tableID); };
 			return new QvxTable()
 			{
 				TableName = tableName,
-				Fields = fields,
+				Fields = fields.Fields,
 				GetRows = handler
 			};
 		}
 
-		private static QvxField[] GetFields(QvxConnection connection, string tableID)
-        {
-            IDictionary<string, Type> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
+		private QvxFieldsWrapper GetFields(QvxConnection connection, string tableID)
+		{
+			IDictionary<string, SalesforceDataType> fields = EndpointCalls.GetFieldsFromReport(connection, tableID);
 			if (fields == default(IDictionary<string, Type>))
 			{
-				return new QvxField[0];
+				return new QvxFieldsWrapper(0);
 			}
 
-            QvxField[] qvxFields = fields.Select(f => new QvxField(f.Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)).ToArray();
+			QvxFieldsWrapper qvxFields = new QvxFieldsWrapper(fields.Count);
 
-            return qvxFields;
-        }
+			for (int i = 0; i < fields.Count; i++)
+			{
+				if (fields.ElementAt(i).Value == SalesforceDataType.String)
+				{
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII), fields.ElementAt(i).Value);
+				}
+				else if (fields.ElementAt(i).Value == SalesforceDataType.Integer || fields.ElementAt(i).Value == SalesforceDataType.Boolean)
+				{
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_SIGNED_INTEGER, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.INTEGER), fields.ElementAt(i).Value);
+		}
+				else if (fields.ElementAt(i).Value == SalesforceDataType.Double || fields.ElementAt(i).Value == SalesforceDataType.Currency || fields.ElementAt(i).Value == SalesforceDataType.Percent)
+				{
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.REAL), fields.ElementAt(i).Value);
+				}
+				else if (fields.ElementAt(i).Value == SalesforceDataType.DateTime)
+				{
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.TIMESTAMP), fields.ElementAt(i).Value);
+				}
+				else
+				{
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldAttrType.ASCII), fields.ElementAt(i).Value);
+				}
+			}
 
-        private static IEnumerable<QvxDataRow> GetData(QvxConnection connection, QvxField[] fields, string reportID)
-        {
+			return qvxFields;
+		}
 
-            IEnumerable<QvxDataRow> rows = EndpointCalls.GetReportData(connection, fields, reportID);
+		private IEnumerable<QvxDataRow> GetData(QvxConnection connection, QvxFieldsWrapper fields, string reportID)
+		{
+			IEnumerable<QvxDataRow> rows = EndpointCalls.GetReportData(connection, fields, reportID);
+			return rows;
+		}
 
-            return rows;
-        }
-
-        public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
+		public override QvxDataTable ExtractQuery(string query, List<QvxTable> qvxTables)
 		{
 			QvxDataTable returnTable = null;
 
