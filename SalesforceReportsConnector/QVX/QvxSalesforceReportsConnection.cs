@@ -150,9 +150,13 @@ namespace SalesforceReportsConnector.QVX
 				{
 					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.REAL), fields.ElementAt(i).Value);
 				}
+				else if (fields.ElementAt(i).Value == SalesforceDataType.Date)
+				{
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.DATE), fields.ElementAt(i).Value);
+				}
 				else if (fields.ElementAt(i).Value == SalesforceDataType.DateTime)
 				{
-					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_NEVER, FieldAttrType.TIMESTAMP), fields.ElementAt(i).Value);
+					qvxFields.SetFieldValue(i, new QvxField(fields.ElementAt(i).Key, QvxFieldType.QVX_IEEE_REAL, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.TIMESTAMP), fields.ElementAt(i).Value);
 				}
 				else
 				{
