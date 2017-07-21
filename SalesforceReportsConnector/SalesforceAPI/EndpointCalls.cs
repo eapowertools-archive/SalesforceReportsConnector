@@ -355,6 +355,17 @@ namespace SalesforceReportsConnector.SalesforceAPI
 										row[fields.GetField(i)] = null;
 									}
 								}
+								else if (fields.GetFieldType(i) == SalesforceDataType.Boolean)
+								{
+									try
+									{
+										row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<bool>();
+									}
+									catch
+									{
+										row[fields.GetField(i)] = null;
+									}
+								}
 								else if (fields.GetFieldType(i) == SalesforceDataType.Currency)
 								{
 									if (dr.First.First.ElementAt(i)["value"].HasValues)
