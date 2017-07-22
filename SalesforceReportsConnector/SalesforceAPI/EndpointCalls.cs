@@ -273,19 +273,21 @@ namespace SalesforceReportsConnector.SalesforceAPI
 								case "int":
 									columnType = SalesforceDataType.Integer;
 									break;
-								//case "double":
-								//	columnType = SalesforceDataType.Double;
-								//	break;
-								//case "boolean":
-								//	columnType = SalesforceDataType.Boolean;
-								//	break;
+								case "double":
+									columnType = SalesforceDataType.Double;
+									break;
+								case "boolean":
+									columnType = SalesforceDataType.Boolean;
+									break;
 								case "percent":
 									columnType = SalesforceDataType.Percent;
 									break;
-								//case "date":
-								//case "datetime":
-								//	columnType = SalesforceDataType.DateTime;
-								//	break;
+								case "date":
+									columnType = SalesforceDataType.Date;
+									break;
+								case "datetime":
+									columnType = SalesforceDataType.DateTime;
+									break;
 								case "currency":
 									columnType = SalesforceDataType.Currency;
 									break;
@@ -333,11 +335,36 @@ namespace SalesforceReportsConnector.SalesforceAPI
 							{
 								if (fields.GetFieldType(i) == SalesforceDataType.Double || fields.GetFieldType(i) == SalesforceDataType.Percent)
 								{
-									row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<double>();
+									try
+									{
+										row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<double>();
+									}
+									catch
+									{
+										row[fields.GetField(i)] = null;
+									}
 								}
 								else if (fields.GetFieldType(i) == SalesforceDataType.Integer)
 								{
-									row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<int>();
+									try
+									{
+										row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<int>();
+									}
+									catch
+									{
+										row[fields.GetField(i)] = null;
+									}
+								}
+								else if (fields.GetFieldType(i) == SalesforceDataType.Boolean)
+								{
+									try
+									{
+										row[fields.GetField(i)] = dr.First.First.ElementAt(i)["value"].Value<bool>();
+									}
+									catch
+									{
+										row[fields.GetField(i)] = null;
+									}
 								}
 								else if (fields.GetFieldType(i) == SalesforceDataType.Currency)
 								{
@@ -349,6 +376,19 @@ namespace SalesforceReportsConnector.SalesforceAPI
 									else
 									{
 										row[fields.GetField(i)] = null;
+									}
+								}
+								else if (fields.GetFieldType(i) == SalesforceDataType.Date || fields.GetFieldType(i) == SalesforceDataType.DateTime)
+								{
+									string dt = dr.First.First.ElementAt(i)["value"].Value<string>();
+									if (string.IsNullOrWhiteSpace(dt) || dt == "-")
+									{
+										row[fields.GetField(i)] = null;
+									}
+									else
+									{
+										DateTime datetime = DateTime.Parse(dt);
+										row[fields.GetField(i)] = datetime.ToOADate();
 									}
 								}
 								else

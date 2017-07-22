@@ -13,6 +13,7 @@ namespace SalesforceReportsConnector.QVX
 		Double,
 		Boolean,
 		Percent,
+		Date,
 		DateTime,
 		Currency
 	}
