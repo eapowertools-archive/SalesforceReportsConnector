@@ -34,7 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <WixExtension Include="WixUIExtension">
-      <HintPath>..\packages\WiX.3.11.0\tools\WixUIExtension.dll</HintPath>
+      <HintPath>$(WixExtDir)\WixUIExtension.dll</HintPath>
       <Name>WixUIExtension</Name>
     </WixExtension>
   </ItemGroup>
