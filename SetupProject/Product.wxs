@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Product Id="*" Name="Salesforce Reports Connector" Language="1033" Version="!(bind.FileVersion.SalesforceReportsConnectorExe)" Manufacturer="EA Powertools" UpgradeCode="1a59629a-dfcd-44be-aa1b-2096b095d7a3" Codepage="1252">
-    <Package Platform="x64" Description="Salesforce Reports QVX Connector Installer" InstallerVersion="200" Compressed="yes" InstallScope="perMachine" SummaryCodepage="1252" InstallPrivileges="elevated" AdminImage="yes" />
+    <Package Platform="x64" Description="Salesforce Reports QVX Connector Installer" InstallerVersion="200" Compressed="yes" InstallScope="perMachine" SummaryCodepage="1252" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes" />
@@ -94,8 +94,11 @@
     </Feature>
 
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
-    
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+    <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
+
+
     <UIRef Id="WixUI_Minimal" />
-    
+      
   </Product>
 </Wix>
