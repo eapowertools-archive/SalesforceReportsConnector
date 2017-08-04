@@ -59,13 +59,13 @@
   </Target>
   <Target Name="AfterBuild">
   </Target>
-  <PropertyGroup>
-    <PostBuildEvent>("C:\Program Files (x86)\WiX Toolset v3.11\bin\insignia.exe" -im "$(TargetPath)") ^&amp; IF %25ERRORLEVEL%25 LEQ 1 exit 0</PostBuildEvent>
-  </PropertyGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\WiX.3.11.0\build\wix.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\WiX.3.11.0\build\wix.props'))" />
   </Target>
+  <PropertyGroup>
+    <PostBuildEvent>("$(SolutionDir)\packages\WiX.3.11.0\tools\insignia.exe" -im "$(TargetPath)") ^&amp; IF %25ERRORLEVEL%25 LEQ 1 exit 0</PostBuildEvent>
+  </PropertyGroup>
 </Project>
