@@ -7,3 +7,6 @@ Head over to the [releases](https://github.com/eapowertools/SalesforceReportsCon
 ### Installation
 
 1. Once you have downloaded the `.msi` file, double click it to launch the installer.
+
+1. The following screen should appear.
+!(https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/installation.png)
