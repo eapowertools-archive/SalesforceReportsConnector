@@ -41,8 +41,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 						}
 					}
 					connection.MParameters[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN] = newAccessToken;
-					TempLogger.Log("Access token:");
-					TempLogger.Log(newAccessToken);
+
 					try
 					{
 						return endpointCall(newAccessToken);

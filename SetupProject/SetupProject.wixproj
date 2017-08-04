@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" InitialTargets="EnsureWixToolsetInstalled" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\WiX.3.11.0\build\wix.props" Condition="Exists('..\packages\WiX.3.11.0\build\wix.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -9,6 +10,8 @@
     <OutputName>SalesforceReportsConnector</OutputName>
     <OutputType>Package</OutputType>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
@@ -33,14 +36,15 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <WixExtension Include="WixUIExtension">
-      <HintPath>$(WixExtDir)\WixUIExtension.dll</HintPath>
-      <Name>WixUIExtension</Name>
-    </WixExtension>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="dialog.bmp" />
     <Content Include="License.rtf" />
+    <Content Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <WixExtension Include="WixUIExtension">
+      <HintPath>..\packages\WiX.3.11.0\tools\WixUIExtension.dll</HintPath>
+      <Name>WixUIExtension</Name>
+    </WixExtension>
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets" Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets') " />
@@ -58,4 +62,10 @@
   <PropertyGroup>
     <PostBuildEvent>("C:\Program Files (x86)\WiX Toolset v3.11\bin\insignia.exe" -im "$(TargetPath)") ^&amp; IF %25ERRORLEVEL%25 LEQ 1 exit 0</PostBuildEvent>
   </PropertyGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\WiX.3.11.0\build\wix.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\WiX.3.11.0\build\wix.props'))" />
+  </Target>
 </Project>
