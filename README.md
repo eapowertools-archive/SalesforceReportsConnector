@@ -22,3 +22,7 @@ Head over to the [releases](https://github.com/eapowertools/SalesforceReportsCon
 1. Once you are in the `Data load editor`, you can click `Create new connection` and select `Salesforce Reports Connector`.
 
 ![Create new connection](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/chooseConnection.png)
+
+1. The following window will appear, enter a connection name (must be unique), and hit `Next`.
+
+![Connection Name](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/newConnection.png)
