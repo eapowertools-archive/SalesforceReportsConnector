@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using QlikView.Qvx.QvxLibrary;
-using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 using Microsoft.SqlServer.TransactSql.ScriptDom;
 using System.Threading.Tasks;
@@ -16,6 +15,7 @@ namespace SalesforceReportsConnector.QVX
 
 		public override void Init()
 		{
+			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Debug, "Calling QvxSalesforceReportsConnection.Init()");
 			this.MTables = GetTables();
 		}
 

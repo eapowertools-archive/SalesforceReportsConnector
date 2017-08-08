@@ -6,7 +6,6 @@ using System.Net;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using QlikView.Qvx.QvxLibrary;
-using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.QVX;
 
 namespace SalesforceReportsConnector.SalesforceAPI
