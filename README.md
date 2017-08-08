@@ -27,5 +27,8 @@ Head over to the [releases](https://github.com/eapowertools/SalesforceReportsCon
 1. You will now need to login to salesforce so you can allow the connector to access your reports. When you see the following screen, click the `Login/Authenticate` button. This will open a new window in your default web browser on your machine.  
 ![Login](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/emptyAuth.png)
 
-1. Upon clicking `Login/Authenticate`, if you are *NOT* logged in, you will see the following screen. If you are logged in, go directly to the next step.
+1. Upon clicking `Login/Authenticate`, if you are *NOT* logged in, you will see the following screen. You will need to login here. If you are logged in, go directly to the next step.  
 ![Salesforce Login](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/salesforceLogin.png)
+
+1. Once you are logged in, you will see the following salesforce page. You will need to click the `Allow` button to allow the connector to access your reports. If you are signed in as the wrong user, click `Not You?`.
+![Authorize](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/salesforceLogin.png)
