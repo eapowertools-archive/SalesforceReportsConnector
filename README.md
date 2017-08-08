@@ -33,8 +33,10 @@ Head over to the [releases](https://github.com/eapowertools/SalesforceReportsCon
 1. Once you are logged in, you will see the following salesforce page. You will need to click the `Allow` button to allow the connector to access your reports. If you are signed in as the wrong user, click `Not You?`.
 ![Authorize](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/apiAuth.png)
 
-1. After clicking `Allow`, you will reach an empty white page with the text `Remote Access Application Authorization`. Copy the *ENTIRE* url `http://...` as you will need this for the next step.
+1. After clicking `Allow`, you will reach an empty white page with the text `Remote Access Application Authorization`. Copy the **ENTIRE** URL `http://...` as you will need this for the next step.
 ![Access Granted](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/authGranted.png)
 
-1. Go back to Qlik Sense and the `Salesforce Login and Authentication` window should still be open. Paste the entire url copies from your salesforce page into box. The text underneath should turn green and read _valid url_.
+1. Go back to Qlik Sense and the `Salesforce Login and Authentication` window should still be open. Paste the entire url copies from your salesforce page into box. The text underneath should turn green and read _valid URL_.
 ![Complete](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/completedAuth.png)
+
+1. Click finish! At this point the connector should appear on the right under your list of connectors. You can then go and click select data!
