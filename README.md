@@ -22,4 +22,4 @@ Head over to the [releases](https://github.com/eapowertools/SalesforceReportsCon
 ![Create new connection](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/chooseConnection.png)
 
 1. The following window will appear. First you will need to enter a connection name (must be unique), then choose a server. If you are unsure, choose `Use Production` as this will use the default server you connect to when you use the web interface at `login.salesforce.com`. If you have a custom server, you can select this option and enter your server hostname. After you are done, click `Ok`.  
-![Connection Name](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/connectorName.png)
+![Connection Name](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/newConnectionName.png)
