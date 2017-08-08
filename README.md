@@ -2,6 +2,9 @@
 This salesforce reports connector allows users to log into Salesforce.com with their Salesforce credentials and pull down any report they have access to into a Qlik Sense app via the load script editor. You can either grab the source code and build the project here, or an installer will be available for download soon after it goes through beta testing.
 
 [Download](#download)
+[Installation](#installation)
+[Setup](#setup)
+
 ### Download
 Head over to the [releases](https://github.com/eapowertools/SalesforceReportsConnector/releases) page for the latest installer! The latest installer will be the entry at the top of the page, look for the `.msi` file under `Downloads`.
 
@@ -16,7 +19,7 @@ Head over to the [releases](https://github.com/eapowertools/SalesforceReportsCon
 1. When the installer completes, the Salesforce Reports Connector is successfully installed!
 
 
-### Usage
+### Setup
 
 1. Once you are in the `Data load editor`, you can click `Create new connection` and select `Salesforce Reports Connector`.  
 ![Create new connection](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/chooseConnection.png)
