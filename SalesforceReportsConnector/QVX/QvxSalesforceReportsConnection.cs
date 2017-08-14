@@ -15,9 +15,6 @@ namespace SalesforceReportsConnector.QVX
 
 		public override void Init()
 		{
-			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, "");
-			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "");
-
 			this.MTables = GetTables();
 		}
 
