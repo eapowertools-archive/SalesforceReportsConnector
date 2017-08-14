@@ -45,18 +45,22 @@ namespace SalesforceReportsConnector.SalesforceAPI
 					{
 						return endpointCall(newAccessToken);
 					}
-					catch
+					catch (Exception ex)
 					{
+						QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, "Call to Salesforce API failed with exception: " + ex.Message);
 						return default(T);
 					}
 				}
 				else
 				{
+					QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, "Failed trying to get new access token. Refresh token is: " + connectionParams[QvxSalesforceConnectionInfo.CONNECTION_REFRESH_TOKEN]);
+					QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, String.Format("Status code: '{0}' Exception: {1}", ((HttpWebResponse)e.Response).StatusCode, e.Message));
 					throw new Exception("Invalid Web Response");
 				}
 			}
 			catch (Exception)
 			{
+				QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, "Call to Salesforce API failed with exception: " + ex.Message);
 				return default(T);
 			}
 		}

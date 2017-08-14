@@ -15,7 +15,9 @@ namespace SalesforceReportsConnector.QVX
 
 		public override void Init()
 		{
-			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Debug, "Calling QvxSalesforceReportsConnection.Init()");
+			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, "");
+			QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "");
+
 			this.MTables = GetTables();
 		}
 
@@ -115,6 +117,7 @@ namespace SalesforceReportsConnector.QVX
 			QvxFieldsWrapper fields = GetFields(connection, tableID);
 			if (fields.GetLength() == 0)
 			{
+				QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "No fields were found for table '" + tableName + "'.");
 				return null;
 			}
 			QvxTable.GetRowsHandler handler = () => { return GetData(connection, fields, tableID); };
@@ -170,6 +173,10 @@ namespace SalesforceReportsConnector.QVX
 		private IEnumerable<QvxDataRow> GetData(QvxConnection connection, QvxFieldsWrapper fields, string reportID)
 		{
 			IEnumerable<QvxDataRow> rows = EndpointCalls.GetReportData(connection, fields, reportID);
+			if (rows.Count() == 0)
+			{
+				QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "No rows were returned for report ID: '" + reportID + "'.");
+			}
 			return rows;
 		}
 
