@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using QlikView.Qvx.QvxLibrary;
 using SalesforceReportsConnector.SalesforceAPI;
-using SalesforceReportsConnector.Logger;
 
 namespace SalesforceReportsConnector.QVX
 {

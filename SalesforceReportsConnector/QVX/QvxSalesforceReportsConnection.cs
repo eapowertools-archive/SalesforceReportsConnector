@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using QlikView.Qvx.QvxLibrary;
-using SalesforceReportsConnector.Logger;
 using SalesforceReportsConnector.SalesforceAPI;
 using Microsoft.SqlServer.TransactSql.ScriptDom;
 using System.Threading.Tasks;
@@ -115,6 +114,7 @@ namespace SalesforceReportsConnector.QVX
 			QvxFieldsWrapper fields = GetFields(connection, tableID);
 			if (fields.GetLength() == 0)
 			{
+				QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "No fields were found for table '" + tableName + "'.");
 				return null;
 			}
 			QvxTable.GetRowsHandler handler = () => { return GetData(connection, fields, tableID); };
@@ -170,6 +170,10 @@ namespace SalesforceReportsConnector.QVX
 		private IEnumerable<QvxDataRow> GetData(QvxConnection connection, QvxFieldsWrapper fields, string reportID)
 		{
 			IEnumerable<QvxDataRow> rows = EndpointCalls.GetReportData(connection, fields, reportID);
+			if (rows.Count() == 0)
+			{
+				QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "No rows were returned for report ID: '" + reportID + "'.");
+			}
 			return rows;
 		}
 
