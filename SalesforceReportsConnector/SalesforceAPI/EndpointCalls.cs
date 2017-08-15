@@ -58,9 +58,9 @@ namespace SalesforceReportsConnector.SalesforceAPI
 					throw new Exception("Invalid Web Response");
 				}
 			}
-			catch (Exception)
+			catch (Exception exception)
 			{
-				QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, "Call to Salesforce API failed with exception: " + ex.Message);
+				QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, "Call to Salesforce API failed with exception: " + exception.Message);
 				return default(T);
 			}
 		}
