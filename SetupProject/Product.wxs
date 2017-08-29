@@ -34,7 +34,7 @@
               <Component Id="Microsoft.SqlServer.TransactSql.ScriptDom.dll_comp" Guid="871c0b76-b01b-44f0-8fdf-3bee7c5d7012" Win64="yes">
                 <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\Microsoft.SqlServer.TransactSql.ScriptDom.dll" Id="microsoftScriptDomDll" KeyPath="yes" />
               </Component>
-              
+
               <Directory Id="INSTALLWEBSUBDIR" Name="web">
                 <Component Id="connectdialog.css_comp" Guid="cf004a9d-e8b5-427b-8b8b-095d18c03ca5" Win64="yes">
                   <File Source="$(var.ProjectDir)..\SalesforceReportsConnector\bin\Release\web\connectdialog.css" Id="connectDialogCss" KeyPath="yes" />
@@ -87,7 +87,7 @@
         <ComponentRef Id="salesforcelogindialog.js_comp" />
         <ComponentRef Id="salesforcelogindialog.ng.html_comp" />
         <ComponentRef Id="selectdialog.js_comp" />
-                      
+
         <!-- Registry entries -->
         <!--<ComponentRef Id="RegValInstallLocation_comp" />-->
       </Feature>
@@ -97,8 +97,20 @@
     <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
     <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
 
-
     <UIRef Id="WixUI_Minimal" />
-      
+
+    <Property Id="QLIKSENSE_INSTALLDIR">
+        <DirectorySearch Id="QS_ProgramData" Path="C:\ProgramData\Qlik\Sense\" />
+    </Property>
+
+    <InstallExecuteSequence>
+      <StopServices>
+        <![CDATA[QLIKSENSE_INSTALLDIR]]>
+      </StopServices>
+      <StartServices>
+        <![CDATA[QLIKSENSE_INSTALLDIR]]>
+      </StartServices>
+    </InstallExecuteSequence>
+
   </Product>
 </Wix>
