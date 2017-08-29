@@ -6,11 +6,6 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
-
-
-    <Property Id="MsiLogging" Value="v" />
-
-
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="CommonFiles64Folder">
         <Directory Id="CommonFilesHK" Name="Qlik">
@@ -102,7 +97,6 @@
     <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
     <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
 
-
     <UIRef Id="WixUI_Minimal" />
 
     <Property Id="QLIKSENSE_INSTALLDIR">
@@ -117,8 +111,6 @@
         <![CDATA[QLIKSENSE_INSTALLDIR]]>
       </StartServices>
     </InstallExecuteSequence>
-
-
 
   </Product>
 </Wix>
