@@ -100,7 +100,7 @@
     <UIRef Id="WixUI_Minimal" />
 
     <Property Id="QLIKSENSE_INSTALLDIR">
-        <DirectorySearch Id="QS_ProgramData" Path="C:\ProgramData\Qlik\Sense\" />
+        <DirectorySearch Id="QS_ProgramData" Path="C:\ProgramData\Qlik\Sense\Repository" />
     </Property>
 
     <InstallExecuteSequence>

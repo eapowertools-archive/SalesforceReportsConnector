@@ -16,6 +16,7 @@ namespace SalesforceReportsConnector.SalesforceAPI
 	{
 		public static T ValidateAccessTokenAndPerformRequest<T>(QvxConnection connection, IDictionary<string, string> connectionParams, Func<string, T> endpointCall)
 		{
+			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 			try
 			{
 				return endpointCall(connectionParams[QvxSalesforceConnectionInfo.CONNECTION_ACCESS_TOKEN]);
