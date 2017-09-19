@@ -16,7 +16,7 @@ Head over to the [releases](https://github.com/eapowertools/SalesforceReportsCon
 1. The following screen should appear. You will need to accept the license terms before you can install.  
 ![Installation Window](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/installation.png)
 
-1. When the installer completes, the Salesforce Reports Connector is successfully installed!
+1. When the installer completes, the Salesforce Reports Connector is successfully installed! _If you are running Qlik Sense Desktop, you will need to restart Qlik Sense Desktop for the connector to appear._
 
 
 ### Setup
