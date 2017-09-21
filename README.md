@@ -48,4 +48,6 @@ Head over to the [releases](https://github.com/eapowertools/SalesforceReportsCon
 
 ### Limitations
 
-1. The Salesforce API limits the amount of rows to be fetched to 2000 rows. This means you can only load 2000 per report beacuse of a Salesforce limitation.
+1. The Salesforce API limits the amount of rows to be fetched to 2000 rows. This means you can only load 2000 rows per report beacuse of a Salesforce limitation.
+
+1. You currently cannot send filters/limiters from the Qlik Sense Load Script Editor window. It will try to fetch the whole report regardless of columns selected and filters that may have been appended.
