@@ -4,6 +4,7 @@ This salesforce reports connector allows users to log into Salesforce.com with t
 [Download](#download)  
 [Installation](#installation)  
 [Setup](#setup)  
+[Limitations](#limitations)  
 
 ### Download
 Head over to the [releases](https://github.com/eapowertools/SalesforceReportsConnector/releases) page for the latest installer! The latest installer will be the entry at the top of the page, look for the `.msi` file under `Downloads`.
@@ -43,3 +44,8 @@ Head over to the [releases](https://github.com/eapowertools/SalesforceReportsCon
 ![Complete](https://s3.amazonaws.com/eapowertools/salesforce-reports-connector/imgs/readme/completedAuth.png)
 
 1. Click finish! At this point the connector should appear on the right under your list of connectors. You can then go and click select data!
+
+
+### Limitations
+
+1. The Salesforce API limits the amount of rows to be fetched to 2000 rows. This means you can only load 2000 per report beacuse of a Salesforce limitation.
