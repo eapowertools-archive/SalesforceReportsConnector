@@ -189,7 +189,7 @@ namespace SalesforceReportsConnector.QVX
 				script = parser.Parse(reader, out errors) as TSqlScript;
 			}
 
-			IList<TSqlParserToken> tokens = script.Batches[0].Statements[0].ScriptTokenStream;
+			IList<TSqlParserToken> tokens = script.ScriptTokenStream;
 
 			// get record folder
 			TSqlParserToken fromToken = tokens.First(t => t.TokenType == TSqlTokenType.From);
