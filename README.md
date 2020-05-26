@@ -1,5 +1,5 @@
 # Status
-[![Project Status: Inactive – The project has reached a stable, usable state but is no longer being actively developed; support/maintenance will be provided as time allows.](https://www.repostatus.org/badges/latest/inactive.svg)](https://www.repostatus.org/#inactive)
+[![Project Status: Unsupported – The project has reached a stable, usable state but the author(s) have ceased all work on it. A new maintainer may be desired.](https://www.repostatus.org/badges/latest/unsupported.svg)](https://www.repostatus.org/#unsupported)
 
 # Salesforce Reports Connector
 This salesforce reports connector allows users to log into Salesforce.com with their Salesforce credentials and pull down any report they have access to into a Qlik Sense app via the load script editor. You can either grab the source code and build the project here, or follow the download instructions for an installer.
